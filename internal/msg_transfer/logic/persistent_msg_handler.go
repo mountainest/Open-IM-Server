@@ -16,7 +16,6 @@ import (
 	"Open_IM/pkg/utils"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/proto"
-	"strings"
 )
 
 type PersistentConsumerHandler struct {
@@ -27,35 +26,43 @@ type PersistentConsumerHandler struct {
 func (pc *PersistentConsumerHandler) Init() {
 	pc.msgHandle = make(map[string]fcb)
 	pc.msgHandle[config.Config.Kafka.Ws2mschat.Topic] = pc.handleChatWs2Mysql
-	pc.persistentConsumerGroup = kfk.NewMConsumerGroup(&kfk.MConsumerGroupConfig{KafkaVersion: sarama.V0_10_2_0,
+	pc.persistentConsumerGroup = kfk.NewMConsumerGroup(&kfk.MConsumerGroupConfig{KafkaVersion: sarama.V2_0_0_0,
 		OffsetsInitial: sarama.OffsetNewest, IsReturnErr: false}, []string{config.Config.Kafka.Ws2mschat.Topic},
 		config.Config.Kafka.Ws2mschat.Addr, config.Config.Kafka.ConsumerGroupID.MsgToMySql)
 
 }
-func (pc *PersistentConsumerHandler) handleChatWs2Mysql(msg []byte, msgKey string) {
-	log.InfoByKv("chat come here mysql!!!", "", "chat", string(msg))
-	pbData := pbMsg.WSToMsgSvrChatMsg{}
-	err := proto.Unmarshal(msg, &pbData)
+
+func (pc *PersistentConsumerHandler) handleChatWs2Mysql(cMsg *sarama.ConsumerMessage, msgKey string, _ sarama.ConsumerGroupSession) {
+	msg := cMsg.Value
+	log.NewInfo("msg come here mysql!!!", "", "msg", string(msg), msgKey)
+	var tag bool
+	msgFromMQ := pbMsg.MsgDataToMQ{}
+	err := proto.Unmarshal(msg, &msgFromMQ)
 	if err != nil {
-		log.ErrorByKv("msg_transfer Unmarshal chat err", "", "chat", string(msg), "err", err.Error())
+		log.NewError(msgFromMQ.OperationID, "msg_transfer Unmarshal msg err", "msg", string(msg), "err", err.Error())
 		return
 	}
-	Options := utils.JsonStringToMap(pbData.Options)
+	log.Debug(msgFromMQ.OperationID, "proto.Unmarshal MsgDataToMQ", msgFromMQ.String())
 	//Control whether to store history messages (mysql)
-	isPersist := utils.GetSwitchFromOptions(Options, "persistent")
+	isPersist := utils.GetSwitchFromOptions(msgFromMQ.MsgData.Options, constant.IsPersistent)
 	//Only process receiver data
 	if isPersist {
-		if msgKey == pbData.RecvID && pbData.SessionType == constant.SingleChatType {
-			log.InfoByKv("msg_transfer chat persisting", pbData.OperationID)
-			if err = im_mysql_msg_model.InsertMessageToChatLog(pbData); err != nil {
-				log.ErrorByKv("Message insert failed", pbData.OperationID, "err", err.Error(), "chat", pbData.String())
-				return
+		switch msgFromMQ.MsgData.SessionType {
+		case constant.SingleChatType, constant.NotificationChatType:
+			if msgKey == msgFromMQ.MsgData.RecvID {
+				tag = true
 			}
-		} else if pbData.SessionType == constant.GroupChatType && msgKey == "0" {
-			pbData.RecvID = strings.Split(pbData.RecvID, " ")[1]
-			log.InfoByKv("msg_transfer chat persisting", pbData.OperationID)
-			if err = im_mysql_msg_model.InsertMessageToChatLog(pbData); err != nil {
-				log.ErrorByKv("Message insert failed", pbData.OperationID, "err", err.Error(), "chat", pbData.String())
+		case constant.GroupChatType:
+			if msgKey == msgFromMQ.MsgData.SendID {
+				tag = true
+			}
+		case constant.SuperGroupChatType:
+			tag = true
+		}
+		if tag {
+			log.NewInfo(msgFromMQ.OperationID, "msg_transfer msg persisting", string(msg))
+			if err = im_mysql_msg_model.InsertMessageToChatLog(msgFromMQ); err != nil {
+				log.NewError(msgFromMQ.OperationID, "Message insert failed", "err", err.Error(), "msg", msgFromMQ.String())
 				return
 			}
 		}
@@ -67,8 +74,12 @@ func (PersistentConsumerHandler) Cleanup(_ sarama.ConsumerGroupSession) error { 
 func (pc *PersistentConsumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession,
 	claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		log.InfoByKv("kafka get info to mysql", "", "msgTopic", msg.Topic, "msgPartition", msg.Partition, "chat", string(msg.Value))
-		pc.msgHandle[msg.Topic](msg.Value, string(msg.Key))
+		log.NewDebug("", "kafka get info to mysql", "msgTopic", msg.Topic, "msgPartition", msg.Partition, "msg", string(msg.Value), "key", string(msg.Key))
+		if len(msg.Value) != 0 {
+			pc.msgHandle[msg.Topic](msg, string(msg.Key), sess)
+		} else {
+			log.Error("", "msg get from kafka but is nil", msg.Key)
+		}
 		sess.MarkMessage(msg, "")
 	}
 	return nil
