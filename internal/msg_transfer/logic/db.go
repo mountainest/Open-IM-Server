@@ -2,24 +2,28 @@ package logic
 
 import (
 	"Open_IM/pkg/common/db"
-	"Open_IM/pkg/common/db/mysql_model/im_mysql_model"
 	"Open_IM/pkg/common/log"
 	pbMsg "Open_IM/pkg/proto/chat"
 	"Open_IM/pkg/utils"
 )
 
-func saveUserChat(uid string, pbMsg *pbMsg.MsgSvrToPushSvrChatMsg) error {
+func saveUserChat(uid string, msg *pbMsg.MsgDataToMQ) error {
 	time := utils.GetCurrentTimestampByMill()
 	seq, err := db.DB.IncrUserSeq(uid)
 	if err != nil {
-		log.NewError(pbMsg.OperationID, "data insert to redis err", err.Error(), pbMsg.String())
+		log.NewError(msg.OperationID, "data insert to redis err", err.Error(), msg.String())
 		return err
 	}
-	pbMsg.RecvSeq = seq
-	log.NewInfo(pbMsg.OperationID, "IncrUserSeq cost time", utils.GetCurrentTimestampByMill()-time)
-	return db.DB.SaveUserChat(uid, pbMsg.SendTime, pbMsg)
+	msg.MsgData.Seq = uint32(seq)
+	pbSaveData := pbMsg.MsgDataToDB{}
+	pbSaveData.MsgData = msg.MsgData
+	log.NewInfo(msg.OperationID, "IncrUserSeq cost time", utils.GetCurrentTimestampByMill()-time)
+	return db.DB.SaveUserChatMongo2(uid, pbSaveData.MsgData.SendTime, &pbSaveData)
+	//	return db.DB.SaveUserChatMongo2(uid, pbSaveData.MsgData.SendTime, &pbSaveData)
 }
 
-func getGroupList(groupID string) ([]string, error) {
-	return im_mysql_model.SelectGroupList(groupID)
+func saveUserChatList(userID string, msgList []*pbMsg.MsgDataToMQ, operationID string) (error, uint64) {
+	log.Info(operationID, utils.GetSelfFuncName(), "args ", userID, len(msgList))
+	//return db.DB.BatchInsertChat(userID, msgList, operationID)
+	return db.DB.BatchInsertChat2Cache(userID, msgList, operationID)
 }

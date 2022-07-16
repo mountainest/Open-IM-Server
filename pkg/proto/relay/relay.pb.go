@@ -6,6 +6,7 @@ package pbRelay // import "./relay"
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import sdk_ws "Open_IM/pkg/proto/sdk_ws"
 
 import (
 	context "golang.org/x/net/context"
@@ -23,198 +24,245 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type MsgToUserReq struct {
-	SendID               string   `protobuf:"bytes,1,opt,name=SendID" json:"SendID,omitempty"`
-	RecvID               string   `protobuf:"bytes,2,opt,name=RecvID" json:"RecvID,omitempty"`
-	Content              string   `protobuf:"bytes,5,opt,name=Content" json:"Content,omitempty"`
-	RecvSeq              int64    `protobuf:"varint,6,opt,name=RecvSeq" json:"RecvSeq,omitempty"`
-	SendTime             int64    `protobuf:"varint,7,opt,name=SendTime" json:"SendTime,omitempty"`
-	MsgFrom              int32    `protobuf:"varint,8,opt,name=MsgFrom" json:"MsgFrom,omitempty"`
-	ContentType          int32    `protobuf:"varint,9,opt,name=ContentType" json:"ContentType,omitempty"`
-	SessionType          int32    `protobuf:"varint,10,opt,name=SessionType" json:"SessionType,omitempty"`
-	OperationID          string   `protobuf:"bytes,11,opt,name=OperationID" json:"OperationID,omitempty"`
-	ServerMsgID          string   `protobuf:"bytes,12,opt,name=ServerMsgID" json:"ServerMsgID,omitempty"`
-	PlatformID           int32    `protobuf:"varint,13,opt,name=PlatformID" json:"PlatformID,omitempty"`
-	SenderNickName       string   `protobuf:"bytes,14,opt,name=SenderNickName" json:"SenderNickName,omitempty"`
-	SenderFaceURL        string   `protobuf:"bytes,15,opt,name=SenderFaceURL" json:"SenderFaceURL,omitempty"`
-	ClientMsgID          string   `protobuf:"bytes,16,opt,name=ClientMsgID" json:"ClientMsgID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type OnlinePushMsgReq struct {
+	OperationID          string          `protobuf:"bytes,1,opt,name=OperationID" json:"OperationID,omitempty"`
+	MsgData              *sdk_ws.MsgData `protobuf:"bytes,2,opt,name=msgData" json:"msgData,omitempty"`
+	PushToUserID         string          `protobuf:"bytes,3,opt,name=pushToUserID" json:"pushToUserID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *MsgToUserReq) Reset()         { *m = MsgToUserReq{} }
-func (m *MsgToUserReq) String() string { return proto.CompactTextString(m) }
-func (*MsgToUserReq) ProtoMessage()    {}
-func (*MsgToUserReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_ff2396ffa84abfa7, []int{0}
+func (m *OnlinePushMsgReq) Reset()         { *m = OnlinePushMsgReq{} }
+func (m *OnlinePushMsgReq) String() string { return proto.CompactTextString(m) }
+func (*OnlinePushMsgReq) ProtoMessage()    {}
+func (*OnlinePushMsgReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{0}
 }
-func (m *MsgToUserReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MsgToUserReq.Unmarshal(m, b)
+func (m *OnlinePushMsgReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OnlinePushMsgReq.Unmarshal(m, b)
 }
-func (m *MsgToUserReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MsgToUserReq.Marshal(b, m, deterministic)
+func (m *OnlinePushMsgReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OnlinePushMsgReq.Marshal(b, m, deterministic)
 }
-func (dst *MsgToUserReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgToUserReq.Merge(dst, src)
+func (dst *OnlinePushMsgReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OnlinePushMsgReq.Merge(dst, src)
 }
-func (m *MsgToUserReq) XXX_Size() int {
-	return xxx_messageInfo_MsgToUserReq.Size(m)
+func (m *OnlinePushMsgReq) XXX_Size() int {
+	return xxx_messageInfo_OnlinePushMsgReq.Size(m)
 }
-func (m *MsgToUserReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgToUserReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgToUserReq proto.InternalMessageInfo
-
-func (m *MsgToUserReq) GetSendID() string {
-	if m != nil {
-		return m.SendID
-	}
-	return ""
+func (m *OnlinePushMsgReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_OnlinePushMsgReq.DiscardUnknown(m)
 }
 
-func (m *MsgToUserReq) GetRecvID() string {
-	if m != nil {
-		return m.RecvID
-	}
-	return ""
-}
+var xxx_messageInfo_OnlinePushMsgReq proto.InternalMessageInfo
 
-func (m *MsgToUserReq) GetContent() string {
-	if m != nil {
-		return m.Content
-	}
-	return ""
-}
-
-func (m *MsgToUserReq) GetRecvSeq() int64 {
-	if m != nil {
-		return m.RecvSeq
-	}
-	return 0
-}
-
-func (m *MsgToUserReq) GetSendTime() int64 {
-	if m != nil {
-		return m.SendTime
-	}
-	return 0
-}
-
-func (m *MsgToUserReq) GetMsgFrom() int32 {
-	if m != nil {
-		return m.MsgFrom
-	}
-	return 0
-}
-
-func (m *MsgToUserReq) GetContentType() int32 {
-	if m != nil {
-		return m.ContentType
-	}
-	return 0
-}
-
-func (m *MsgToUserReq) GetSessionType() int32 {
-	if m != nil {
-		return m.SessionType
-	}
-	return 0
-}
-
-func (m *MsgToUserReq) GetOperationID() string {
+func (m *OnlinePushMsgReq) GetOperationID() string {
 	if m != nil {
 		return m.OperationID
 	}
 	return ""
 }
 
-func (m *MsgToUserReq) GetServerMsgID() string {
+func (m *OnlinePushMsgReq) GetMsgData() *sdk_ws.MsgData {
 	if m != nil {
-		return m.ServerMsgID
+		return m.MsgData
+	}
+	return nil
+}
+
+func (m *OnlinePushMsgReq) GetPushToUserID() string {
+	if m != nil {
+		return m.PushToUserID
 	}
 	return ""
 }
 
-func (m *MsgToUserReq) GetPlatformID() int32 {
-	if m != nil {
-		return m.PlatformID
-	}
-	return 0
+type OnlinePushMsgResp struct {
+	Resp                 []*SingleMsgToUserPlatform `protobuf:"bytes,1,rep,name=resp" json:"resp,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
 }
 
-func (m *MsgToUserReq) GetSenderNickName() string {
-	if m != nil {
-		return m.SenderNickName
-	}
-	return ""
+func (m *OnlinePushMsgResp) Reset()         { *m = OnlinePushMsgResp{} }
+func (m *OnlinePushMsgResp) String() string { return proto.CompactTextString(m) }
+func (*OnlinePushMsgResp) ProtoMessage()    {}
+func (*OnlinePushMsgResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{1}
+}
+func (m *OnlinePushMsgResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OnlinePushMsgResp.Unmarshal(m, b)
+}
+func (m *OnlinePushMsgResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OnlinePushMsgResp.Marshal(b, m, deterministic)
+}
+func (dst *OnlinePushMsgResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OnlinePushMsgResp.Merge(dst, src)
+}
+func (m *OnlinePushMsgResp) XXX_Size() int {
+	return xxx_messageInfo_OnlinePushMsgResp.Size(m)
+}
+func (m *OnlinePushMsgResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_OnlinePushMsgResp.DiscardUnknown(m)
 }
 
-func (m *MsgToUserReq) GetSenderFaceURL() string {
-	if m != nil {
-		return m.SenderFaceURL
-	}
-	return ""
-}
+var xxx_messageInfo_OnlinePushMsgResp proto.InternalMessageInfo
 
-func (m *MsgToUserReq) GetClientMsgID() string {
-	if m != nil {
-		return m.ClientMsgID
-	}
-	return ""
-}
-
-type MsgToUserResp struct {
-	Resp                 []*SingleMsgToUser `protobuf:"bytes,1,rep,name=resp" json:"resp,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
-}
-
-func (m *MsgToUserResp) Reset()         { *m = MsgToUserResp{} }
-func (m *MsgToUserResp) String() string { return proto.CompactTextString(m) }
-func (*MsgToUserResp) ProtoMessage()    {}
-func (*MsgToUserResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_ff2396ffa84abfa7, []int{1}
-}
-func (m *MsgToUserResp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MsgToUserResp.Unmarshal(m, b)
-}
-func (m *MsgToUserResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MsgToUserResp.Marshal(b, m, deterministic)
-}
-func (dst *MsgToUserResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgToUserResp.Merge(dst, src)
-}
-func (m *MsgToUserResp) XXX_Size() int {
-	return xxx_messageInfo_MsgToUserResp.Size(m)
-}
-func (m *MsgToUserResp) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgToUserResp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgToUserResp proto.InternalMessageInfo
-
-func (m *MsgToUserResp) GetResp() []*SingleMsgToUser {
+func (m *OnlinePushMsgResp) GetResp() []*SingleMsgToUserPlatform {
 	if m != nil {
 		return m.Resp
 	}
 	return nil
 }
 
-// message SendMsgByWSReq{
-//  string SendID = 1;
-//  string RecvID = 2;
-//  string Content = 3;
-//  int64 SendTime = 4;
-//  int64  MsgFrom = 5;
-//  int64  ContentType = 6;
-//  int64  SessionType = 7;
-//  string OperationID = 8;
-//  int64  PlatformID = 9;
-// }
-type SingleMsgToUser struct {
+type SingelMsgToUserResultList struct {
+	UserID               string                     `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	Resp                 []*SingleMsgToUserPlatform `protobuf:"bytes,2,rep,name=resp" json:"resp,omitempty"`
+	OnlinePush           bool                       `protobuf:"varint,3,opt,name=onlinePush" json:"onlinePush,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
+}
+
+func (m *SingelMsgToUserResultList) Reset()         { *m = SingelMsgToUserResultList{} }
+func (m *SingelMsgToUserResultList) String() string { return proto.CompactTextString(m) }
+func (*SingelMsgToUserResultList) ProtoMessage()    {}
+func (*SingelMsgToUserResultList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{2}
+}
+func (m *SingelMsgToUserResultList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SingelMsgToUserResultList.Unmarshal(m, b)
+}
+func (m *SingelMsgToUserResultList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SingelMsgToUserResultList.Marshal(b, m, deterministic)
+}
+func (dst *SingelMsgToUserResultList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SingelMsgToUserResultList.Merge(dst, src)
+}
+func (m *SingelMsgToUserResultList) XXX_Size() int {
+	return xxx_messageInfo_SingelMsgToUserResultList.Size(m)
+}
+func (m *SingelMsgToUserResultList) XXX_DiscardUnknown() {
+	xxx_messageInfo_SingelMsgToUserResultList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SingelMsgToUserResultList proto.InternalMessageInfo
+
+func (m *SingelMsgToUserResultList) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *SingelMsgToUserResultList) GetResp() []*SingleMsgToUserPlatform {
+	if m != nil {
+		return m.Resp
+	}
+	return nil
+}
+
+func (m *SingelMsgToUserResultList) GetOnlinePush() bool {
+	if m != nil {
+		return m.OnlinePush
+	}
+	return false
+}
+
+type OnlineBatchPushOneMsgReq struct {
+	OperationID          string          `protobuf:"bytes,1,opt,name=OperationID" json:"OperationID,omitempty"`
+	MsgData              *sdk_ws.MsgData `protobuf:"bytes,2,opt,name=msgData" json:"msgData,omitempty"`
+	PushToUserIDList     []string        `protobuf:"bytes,3,rep,name=pushToUserIDList" json:"pushToUserIDList,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *OnlineBatchPushOneMsgReq) Reset()         { *m = OnlineBatchPushOneMsgReq{} }
+func (m *OnlineBatchPushOneMsgReq) String() string { return proto.CompactTextString(m) }
+func (*OnlineBatchPushOneMsgReq) ProtoMessage()    {}
+func (*OnlineBatchPushOneMsgReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{3}
+}
+func (m *OnlineBatchPushOneMsgReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OnlineBatchPushOneMsgReq.Unmarshal(m, b)
+}
+func (m *OnlineBatchPushOneMsgReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OnlineBatchPushOneMsgReq.Marshal(b, m, deterministic)
+}
+func (dst *OnlineBatchPushOneMsgReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OnlineBatchPushOneMsgReq.Merge(dst, src)
+}
+func (m *OnlineBatchPushOneMsgReq) XXX_Size() int {
+	return xxx_messageInfo_OnlineBatchPushOneMsgReq.Size(m)
+}
+func (m *OnlineBatchPushOneMsgReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_OnlineBatchPushOneMsgReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OnlineBatchPushOneMsgReq proto.InternalMessageInfo
+
+func (m *OnlineBatchPushOneMsgReq) GetOperationID() string {
+	if m != nil {
+		return m.OperationID
+	}
+	return ""
+}
+
+func (m *OnlineBatchPushOneMsgReq) GetMsgData() *sdk_ws.MsgData {
+	if m != nil {
+		return m.MsgData
+	}
+	return nil
+}
+
+func (m *OnlineBatchPushOneMsgReq) GetPushToUserIDList() []string {
+	if m != nil {
+		return m.PushToUserIDList
+	}
+	return nil
+}
+
+type OnlineBatchPushOneMsgResp struct {
+	SinglePushResult     []*SingelMsgToUserResultList `protobuf:"bytes,1,rep,name=singlePushResult" json:"singlePushResult,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                     `json:"-"`
+	XXX_unrecognized     []byte                       `json:"-"`
+	XXX_sizecache        int32                        `json:"-"`
+}
+
+func (m *OnlineBatchPushOneMsgResp) Reset()         { *m = OnlineBatchPushOneMsgResp{} }
+func (m *OnlineBatchPushOneMsgResp) String() string { return proto.CompactTextString(m) }
+func (*OnlineBatchPushOneMsgResp) ProtoMessage()    {}
+func (*OnlineBatchPushOneMsgResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{4}
+}
+func (m *OnlineBatchPushOneMsgResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OnlineBatchPushOneMsgResp.Unmarshal(m, b)
+}
+func (m *OnlineBatchPushOneMsgResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OnlineBatchPushOneMsgResp.Marshal(b, m, deterministic)
+}
+func (dst *OnlineBatchPushOneMsgResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OnlineBatchPushOneMsgResp.Merge(dst, src)
+}
+func (m *OnlineBatchPushOneMsgResp) XXX_Size() int {
+	return xxx_messageInfo_OnlineBatchPushOneMsgResp.Size(m)
+}
+func (m *OnlineBatchPushOneMsgResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_OnlineBatchPushOneMsgResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OnlineBatchPushOneMsgResp proto.InternalMessageInfo
+
+func (m *OnlineBatchPushOneMsgResp) GetSinglePushResult() []*SingelMsgToUserResultList {
+	if m != nil {
+		return m.SinglePushResult
+	}
+	return nil
+}
+
+type SingleMsgToUserPlatform struct {
 	ResultCode           int64    `protobuf:"varint,1,opt,name=ResultCode" json:"ResultCode,omitempty"`
 	RecvID               string   `protobuf:"bytes,2,opt,name=RecvID" json:"RecvID,omitempty"`
 	RecvPlatFormID       int32    `protobuf:"varint,3,opt,name=RecvPlatFormID" json:"RecvPlatFormID,omitempty"`
@@ -223,55 +271,423 @@ type SingleMsgToUser struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SingleMsgToUser) Reset()         { *m = SingleMsgToUser{} }
-func (m *SingleMsgToUser) String() string { return proto.CompactTextString(m) }
-func (*SingleMsgToUser) ProtoMessage()    {}
-func (*SingleMsgToUser) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_ff2396ffa84abfa7, []int{2}
+func (m *SingleMsgToUserPlatform) Reset()         { *m = SingleMsgToUserPlatform{} }
+func (m *SingleMsgToUserPlatform) String() string { return proto.CompactTextString(m) }
+func (*SingleMsgToUserPlatform) ProtoMessage()    {}
+func (*SingleMsgToUserPlatform) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{5}
 }
-func (m *SingleMsgToUser) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SingleMsgToUser.Unmarshal(m, b)
+func (m *SingleMsgToUserPlatform) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SingleMsgToUserPlatform.Unmarshal(m, b)
 }
-func (m *SingleMsgToUser) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SingleMsgToUser.Marshal(b, m, deterministic)
+func (m *SingleMsgToUserPlatform) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SingleMsgToUserPlatform.Marshal(b, m, deterministic)
 }
-func (dst *SingleMsgToUser) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SingleMsgToUser.Merge(dst, src)
+func (dst *SingleMsgToUserPlatform) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SingleMsgToUserPlatform.Merge(dst, src)
 }
-func (m *SingleMsgToUser) XXX_Size() int {
-	return xxx_messageInfo_SingleMsgToUser.Size(m)
+func (m *SingleMsgToUserPlatform) XXX_Size() int {
+	return xxx_messageInfo_SingleMsgToUserPlatform.Size(m)
 }
-func (m *SingleMsgToUser) XXX_DiscardUnknown() {
-	xxx_messageInfo_SingleMsgToUser.DiscardUnknown(m)
+func (m *SingleMsgToUserPlatform) XXX_DiscardUnknown() {
+	xxx_messageInfo_SingleMsgToUserPlatform.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SingleMsgToUser proto.InternalMessageInfo
+var xxx_messageInfo_SingleMsgToUserPlatform proto.InternalMessageInfo
 
-func (m *SingleMsgToUser) GetResultCode() int64 {
+func (m *SingleMsgToUserPlatform) GetResultCode() int64 {
 	if m != nil {
 		return m.ResultCode
 	}
 	return 0
 }
 
-func (m *SingleMsgToUser) GetRecvID() string {
+func (m *SingleMsgToUserPlatform) GetRecvID() string {
 	if m != nil {
 		return m.RecvID
 	}
 	return ""
 }
 
-func (m *SingleMsgToUser) GetRecvPlatFormID() int32 {
+func (m *SingleMsgToUserPlatform) GetRecvPlatFormID() int32 {
 	if m != nil {
 		return m.RecvPlatFormID
 	}
 	return 0
 }
 
+type GetUsersOnlineStatusReq struct {
+	UserIDList           []string `protobuf:"bytes,1,rep,name=userIDList" json:"userIDList,omitempty"`
+	OperationID          string   `protobuf:"bytes,2,opt,name=operationID" json:"operationID,omitempty"`
+	OpUserID             string   `protobuf:"bytes,3,opt,name=opUserID" json:"opUserID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetUsersOnlineStatusReq) Reset()         { *m = GetUsersOnlineStatusReq{} }
+func (m *GetUsersOnlineStatusReq) String() string { return proto.CompactTextString(m) }
+func (*GetUsersOnlineStatusReq) ProtoMessage()    {}
+func (*GetUsersOnlineStatusReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{6}
+}
+func (m *GetUsersOnlineStatusReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetUsersOnlineStatusReq.Unmarshal(m, b)
+}
+func (m *GetUsersOnlineStatusReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetUsersOnlineStatusReq.Marshal(b, m, deterministic)
+}
+func (dst *GetUsersOnlineStatusReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetUsersOnlineStatusReq.Merge(dst, src)
+}
+func (m *GetUsersOnlineStatusReq) XXX_Size() int {
+	return xxx_messageInfo_GetUsersOnlineStatusReq.Size(m)
+}
+func (m *GetUsersOnlineStatusReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetUsersOnlineStatusReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetUsersOnlineStatusReq proto.InternalMessageInfo
+
+func (m *GetUsersOnlineStatusReq) GetUserIDList() []string {
+	if m != nil {
+		return m.UserIDList
+	}
+	return nil
+}
+
+func (m *GetUsersOnlineStatusReq) GetOperationID() string {
+	if m != nil {
+		return m.OperationID
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusReq) GetOpUserID() string {
+	if m != nil {
+		return m.OpUserID
+	}
+	return ""
+}
+
+type GetUsersOnlineStatusResp struct {
+	ErrCode              int32                                     `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg               string                                    `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg,omitempty"`
+	SuccessResult        []*GetUsersOnlineStatusResp_SuccessResult `protobuf:"bytes,3,rep,name=successResult" json:"successResult,omitempty"`
+	FailedResult         []*GetUsersOnlineStatusResp_FailedDetail  `protobuf:"bytes,4,rep,name=failedResult" json:"failedResult,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                  `json:"-"`
+	XXX_unrecognized     []byte                                    `json:"-"`
+	XXX_sizecache        int32                                     `json:"-"`
+}
+
+func (m *GetUsersOnlineStatusResp) Reset()         { *m = GetUsersOnlineStatusResp{} }
+func (m *GetUsersOnlineStatusResp) String() string { return proto.CompactTextString(m) }
+func (*GetUsersOnlineStatusResp) ProtoMessage()    {}
+func (*GetUsersOnlineStatusResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{7}
+}
+func (m *GetUsersOnlineStatusResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetUsersOnlineStatusResp.Unmarshal(m, b)
+}
+func (m *GetUsersOnlineStatusResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetUsersOnlineStatusResp.Marshal(b, m, deterministic)
+}
+func (dst *GetUsersOnlineStatusResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetUsersOnlineStatusResp.Merge(dst, src)
+}
+func (m *GetUsersOnlineStatusResp) XXX_Size() int {
+	return xxx_messageInfo_GetUsersOnlineStatusResp.Size(m)
+}
+func (m *GetUsersOnlineStatusResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetUsersOnlineStatusResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetUsersOnlineStatusResp proto.InternalMessageInfo
+
+func (m *GetUsersOnlineStatusResp) GetErrCode() int32 {
+	if m != nil {
+		return m.ErrCode
+	}
+	return 0
+}
+
+func (m *GetUsersOnlineStatusResp) GetErrMsg() string {
+	if m != nil {
+		return m.ErrMsg
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusResp) GetSuccessResult() []*GetUsersOnlineStatusResp_SuccessResult {
+	if m != nil {
+		return m.SuccessResult
+	}
+	return nil
+}
+
+func (m *GetUsersOnlineStatusResp) GetFailedResult() []*GetUsersOnlineStatusResp_FailedDetail {
+	if m != nil {
+		return m.FailedResult
+	}
+	return nil
+}
+
+type GetUsersOnlineStatusResp_SuccessDetail struct {
+	Platform             string   `protobuf:"bytes,1,opt,name=platform" json:"platform,omitempty"`
+	Status               string   `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetUsersOnlineStatusResp_SuccessDetail) Reset() {
+	*m = GetUsersOnlineStatusResp_SuccessDetail{}
+}
+func (m *GetUsersOnlineStatusResp_SuccessDetail) String() string { return proto.CompactTextString(m) }
+func (*GetUsersOnlineStatusResp_SuccessDetail) ProtoMessage()    {}
+func (*GetUsersOnlineStatusResp_SuccessDetail) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{7, 0}
+}
+func (m *GetUsersOnlineStatusResp_SuccessDetail) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail.Unmarshal(m, b)
+}
+func (m *GetUsersOnlineStatusResp_SuccessDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail.Marshal(b, m, deterministic)
+}
+func (dst *GetUsersOnlineStatusResp_SuccessDetail) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail.Merge(dst, src)
+}
+func (m *GetUsersOnlineStatusResp_SuccessDetail) XXX_Size() int {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail.Size(m)
+}
+func (m *GetUsersOnlineStatusResp_SuccessDetail) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetUsersOnlineStatusResp_SuccessDetail proto.InternalMessageInfo
+
+func (m *GetUsersOnlineStatusResp_SuccessDetail) GetPlatform() string {
+	if m != nil {
+		return m.Platform
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusResp_SuccessDetail) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+type GetUsersOnlineStatusResp_FailedDetail struct {
+	UserID               string   `protobuf:"bytes,3,opt,name=userID" json:"userID,omitempty"`
+	ErrCode              int32    `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg               string   `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetUsersOnlineStatusResp_FailedDetail) Reset()         { *m = GetUsersOnlineStatusResp_FailedDetail{} }
+func (m *GetUsersOnlineStatusResp_FailedDetail) String() string { return proto.CompactTextString(m) }
+func (*GetUsersOnlineStatusResp_FailedDetail) ProtoMessage()    {}
+func (*GetUsersOnlineStatusResp_FailedDetail) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{7, 1}
+}
+func (m *GetUsersOnlineStatusResp_FailedDetail) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail.Unmarshal(m, b)
+}
+func (m *GetUsersOnlineStatusResp_FailedDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail.Marshal(b, m, deterministic)
+}
+func (dst *GetUsersOnlineStatusResp_FailedDetail) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail.Merge(dst, src)
+}
+func (m *GetUsersOnlineStatusResp_FailedDetail) XXX_Size() int {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail.Size(m)
+}
+func (m *GetUsersOnlineStatusResp_FailedDetail) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetUsersOnlineStatusResp_FailedDetail proto.InternalMessageInfo
+
+func (m *GetUsersOnlineStatusResp_FailedDetail) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusResp_FailedDetail) GetErrCode() int32 {
+	if m != nil {
+		return m.ErrCode
+	}
+	return 0
+}
+
+func (m *GetUsersOnlineStatusResp_FailedDetail) GetErrMsg() string {
+	if m != nil {
+		return m.ErrMsg
+	}
+	return ""
+}
+
+type GetUsersOnlineStatusResp_SuccessResult struct {
+	UserID               string                                    `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	Status               string                                    `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	DetailPlatformStatus []*GetUsersOnlineStatusResp_SuccessDetail `protobuf:"bytes,3,rep,name=detailPlatformStatus" json:"detailPlatformStatus,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                  `json:"-"`
+	XXX_unrecognized     []byte                                    `json:"-"`
+	XXX_sizecache        int32                                     `json:"-"`
+}
+
+func (m *GetUsersOnlineStatusResp_SuccessResult) Reset() {
+	*m = GetUsersOnlineStatusResp_SuccessResult{}
+}
+func (m *GetUsersOnlineStatusResp_SuccessResult) String() string { return proto.CompactTextString(m) }
+func (*GetUsersOnlineStatusResp_SuccessResult) ProtoMessage()    {}
+func (*GetUsersOnlineStatusResp_SuccessResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{7, 2}
+}
+func (m *GetUsersOnlineStatusResp_SuccessResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult.Unmarshal(m, b)
+}
+func (m *GetUsersOnlineStatusResp_SuccessResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult.Marshal(b, m, deterministic)
+}
+func (dst *GetUsersOnlineStatusResp_SuccessResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult.Merge(dst, src)
+}
+func (m *GetUsersOnlineStatusResp_SuccessResult) XXX_Size() int {
+	return xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult.Size(m)
+}
+func (m *GetUsersOnlineStatusResp_SuccessResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetUsersOnlineStatusResp_SuccessResult proto.InternalMessageInfo
+
+func (m *GetUsersOnlineStatusResp_SuccessResult) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusResp_SuccessResult) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *GetUsersOnlineStatusResp_SuccessResult) GetDetailPlatformStatus() []*GetUsersOnlineStatusResp_SuccessDetail {
+	if m != nil {
+		return m.DetailPlatformStatus
+	}
+	return nil
+}
+
+type KickUserOfflineReq struct {
+	OperationID          string   `protobuf:"bytes,1,opt,name=operationID" json:"operationID,omitempty"`
+	PlatformID           int32    `protobuf:"varint,2,opt,name=platformID" json:"platformID,omitempty"`
+	KickUserIDList       []string `protobuf:"bytes,3,rep,name=kickUserIDList" json:"kickUserIDList,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *KickUserOfflineReq) Reset()         { *m = KickUserOfflineReq{} }
+func (m *KickUserOfflineReq) String() string { return proto.CompactTextString(m) }
+func (*KickUserOfflineReq) ProtoMessage()    {}
+func (*KickUserOfflineReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{8}
+}
+func (m *KickUserOfflineReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_KickUserOfflineReq.Unmarshal(m, b)
+}
+func (m *KickUserOfflineReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_KickUserOfflineReq.Marshal(b, m, deterministic)
+}
+func (dst *KickUserOfflineReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KickUserOfflineReq.Merge(dst, src)
+}
+func (m *KickUserOfflineReq) XXX_Size() int {
+	return xxx_messageInfo_KickUserOfflineReq.Size(m)
+}
+func (m *KickUserOfflineReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_KickUserOfflineReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KickUserOfflineReq proto.InternalMessageInfo
+
+func (m *KickUserOfflineReq) GetOperationID() string {
+	if m != nil {
+		return m.OperationID
+	}
+	return ""
+}
+
+func (m *KickUserOfflineReq) GetPlatformID() int32 {
+	if m != nil {
+		return m.PlatformID
+	}
+	return 0
+}
+
+func (m *KickUserOfflineReq) GetKickUserIDList() []string {
+	if m != nil {
+		return m.KickUserIDList
+	}
+	return nil
+}
+
+type KickUserOfflineResp struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *KickUserOfflineResp) Reset()         { *m = KickUserOfflineResp{} }
+func (m *KickUserOfflineResp) String() string { return proto.CompactTextString(m) }
+func (*KickUserOfflineResp) ProtoMessage()    {}
+func (*KickUserOfflineResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_relay_eb517eee82ca0aca, []int{9}
+}
+func (m *KickUserOfflineResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_KickUserOfflineResp.Unmarshal(m, b)
+}
+func (m *KickUserOfflineResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_KickUserOfflineResp.Marshal(b, m, deterministic)
+}
+func (dst *KickUserOfflineResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KickUserOfflineResp.Merge(dst, src)
+}
+func (m *KickUserOfflineResp) XXX_Size() int {
+	return xxx_messageInfo_KickUserOfflineResp.Size(m)
+}
+func (m *KickUserOfflineResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_KickUserOfflineResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KickUserOfflineResp proto.InternalMessageInfo
+
 func init() {
-	proto.RegisterType((*MsgToUserReq)(nil), "relay.MsgToUserReq")
-	proto.RegisterType((*MsgToUserResp)(nil), "relay.MsgToUserResp")
-	proto.RegisterType((*SingleMsgToUser)(nil), "relay.SingleMsgToUser")
+	proto.RegisterType((*OnlinePushMsgReq)(nil), "relay.OnlinePushMsgReq")
+	proto.RegisterType((*OnlinePushMsgResp)(nil), "relay.OnlinePushMsgResp")
+	proto.RegisterType((*SingelMsgToUserResultList)(nil), "relay.SingelMsgToUserResultList")
+	proto.RegisterType((*OnlineBatchPushOneMsgReq)(nil), "relay.OnlineBatchPushOneMsgReq")
+	proto.RegisterType((*OnlineBatchPushOneMsgResp)(nil), "relay.OnlineBatchPushOneMsgResp")
+	proto.RegisterType((*SingleMsgToUserPlatform)(nil), "relay.SingleMsgToUserPlatform")
+	proto.RegisterType((*GetUsersOnlineStatusReq)(nil), "relay.GetUsersOnlineStatusReq")
+	proto.RegisterType((*GetUsersOnlineStatusResp)(nil), "relay.GetUsersOnlineStatusResp")
+	proto.RegisterType((*GetUsersOnlineStatusResp_SuccessDetail)(nil), "relay.GetUsersOnlineStatusResp.SuccessDetail")
+	proto.RegisterType((*GetUsersOnlineStatusResp_FailedDetail)(nil), "relay.GetUsersOnlineStatusResp.FailedDetail")
+	proto.RegisterType((*GetUsersOnlineStatusResp_SuccessResult)(nil), "relay.GetUsersOnlineStatusResp.SuccessResult")
+	proto.RegisterType((*KickUserOfflineReq)(nil), "relay.KickUserOfflineReq")
+	proto.RegisterType((*KickUserOfflineResp)(nil), "relay.KickUserOfflineResp")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -285,7 +701,11 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for OnlineMessageRelayService service
 
 type OnlineMessageRelayServiceClient interface {
-	MsgToUser(ctx context.Context, in *MsgToUserReq, opts ...grpc.CallOption) (*MsgToUserResp, error)
+	OnlinePushMsg(ctx context.Context, in *OnlinePushMsgReq, opts ...grpc.CallOption) (*OnlinePushMsgResp, error)
+	GetUsersOnlineStatus(ctx context.Context, in *GetUsersOnlineStatusReq, opts ...grpc.CallOption) (*GetUsersOnlineStatusResp, error)
+	OnlineBatchPushOneMsg(ctx context.Context, in *OnlineBatchPushOneMsgReq, opts ...grpc.CallOption) (*OnlineBatchPushOneMsgResp, error)
+	SuperGroupOnlineBatchPushOneMsg(ctx context.Context, in *OnlineBatchPushOneMsgReq, opts ...grpc.CallOption) (*OnlineBatchPushOneMsgResp, error)
+	KickUserOffline(ctx context.Context, in *KickUserOfflineReq, opts ...grpc.CallOption) (*KickUserOfflineResp, error)
 }
 
 type onlineMessageRelayServiceClient struct {
@@ -296,9 +716,45 @@ func NewOnlineMessageRelayServiceClient(cc *grpc.ClientConn) OnlineMessageRelayS
 	return &onlineMessageRelayServiceClient{cc}
 }
 
-func (c *onlineMessageRelayServiceClient) MsgToUser(ctx context.Context, in *MsgToUserReq, opts ...grpc.CallOption) (*MsgToUserResp, error) {
-	out := new(MsgToUserResp)
-	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/MsgToUser", in, out, c.cc, opts...)
+func (c *onlineMessageRelayServiceClient) OnlinePushMsg(ctx context.Context, in *OnlinePushMsgReq, opts ...grpc.CallOption) (*OnlinePushMsgResp, error) {
+	out := new(OnlinePushMsgResp)
+	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/OnlinePushMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *onlineMessageRelayServiceClient) GetUsersOnlineStatus(ctx context.Context, in *GetUsersOnlineStatusReq, opts ...grpc.CallOption) (*GetUsersOnlineStatusResp, error) {
+	out := new(GetUsersOnlineStatusResp)
+	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/GetUsersOnlineStatus", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *onlineMessageRelayServiceClient) OnlineBatchPushOneMsg(ctx context.Context, in *OnlineBatchPushOneMsgReq, opts ...grpc.CallOption) (*OnlineBatchPushOneMsgResp, error) {
+	out := new(OnlineBatchPushOneMsgResp)
+	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/OnlineBatchPushOneMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *onlineMessageRelayServiceClient) SuperGroupOnlineBatchPushOneMsg(ctx context.Context, in *OnlineBatchPushOneMsgReq, opts ...grpc.CallOption) (*OnlineBatchPushOneMsgResp, error) {
+	out := new(OnlineBatchPushOneMsgResp)
+	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/SuperGroupOnlineBatchPushOneMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *onlineMessageRelayServiceClient) KickUserOffline(ctx context.Context, in *KickUserOfflineReq, opts ...grpc.CallOption) (*KickUserOfflineResp, error) {
+	out := new(KickUserOfflineResp)
+	err := grpc.Invoke(ctx, "/relay.OnlineMessageRelayService/KickUserOffline", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -308,27 +764,103 @@ func (c *onlineMessageRelayServiceClient) MsgToUser(ctx context.Context, in *Msg
 // Server API for OnlineMessageRelayService service
 
 type OnlineMessageRelayServiceServer interface {
-	MsgToUser(context.Context, *MsgToUserReq) (*MsgToUserResp, error)
+	OnlinePushMsg(context.Context, *OnlinePushMsgReq) (*OnlinePushMsgResp, error)
+	GetUsersOnlineStatus(context.Context, *GetUsersOnlineStatusReq) (*GetUsersOnlineStatusResp, error)
+	OnlineBatchPushOneMsg(context.Context, *OnlineBatchPushOneMsgReq) (*OnlineBatchPushOneMsgResp, error)
+	SuperGroupOnlineBatchPushOneMsg(context.Context, *OnlineBatchPushOneMsgReq) (*OnlineBatchPushOneMsgResp, error)
+	KickUserOffline(context.Context, *KickUserOfflineReq) (*KickUserOfflineResp, error)
 }
 
 func RegisterOnlineMessageRelayServiceServer(s *grpc.Server, srv OnlineMessageRelayServiceServer) {
 	s.RegisterService(&_OnlineMessageRelayService_serviceDesc, srv)
 }
 
-func _OnlineMessageRelayService_MsgToUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgToUserReq)
+func _OnlineMessageRelayService_OnlinePushMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlinePushMsgReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OnlineMessageRelayServiceServer).MsgToUser(ctx, in)
+		return srv.(OnlineMessageRelayServiceServer).OnlinePushMsg(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/relay.OnlineMessageRelayService/MsgToUser",
+		FullMethod: "/relay.OnlineMessageRelayService/OnlinePushMsg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OnlineMessageRelayServiceServer).MsgToUser(ctx, req.(*MsgToUserReq))
+		return srv.(OnlineMessageRelayServiceServer).OnlinePushMsg(ctx, req.(*OnlinePushMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OnlineMessageRelayService_GetUsersOnlineStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersOnlineStatusReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineMessageRelayServiceServer).GetUsersOnlineStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/relay.OnlineMessageRelayService/GetUsersOnlineStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineMessageRelayServiceServer).GetUsersOnlineStatus(ctx, req.(*GetUsersOnlineStatusReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OnlineMessageRelayService_OnlineBatchPushOneMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlineBatchPushOneMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineMessageRelayServiceServer).OnlineBatchPushOneMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/relay.OnlineMessageRelayService/OnlineBatchPushOneMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineMessageRelayServiceServer).OnlineBatchPushOneMsg(ctx, req.(*OnlineBatchPushOneMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OnlineMessageRelayService_SuperGroupOnlineBatchPushOneMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlineBatchPushOneMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineMessageRelayServiceServer).SuperGroupOnlineBatchPushOneMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/relay.OnlineMessageRelayService/SuperGroupOnlineBatchPushOneMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineMessageRelayServiceServer).SuperGroupOnlineBatchPushOneMsg(ctx, req.(*OnlineBatchPushOneMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OnlineMessageRelayService_KickUserOffline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KickUserOfflineReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OnlineMessageRelayServiceServer).KickUserOffline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/relay.OnlineMessageRelayService/KickUserOffline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OnlineMessageRelayServiceServer).KickUserOffline(ctx, req.(*KickUserOfflineReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -338,42 +870,79 @@ var _OnlineMessageRelayService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*OnlineMessageRelayServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "MsgToUser",
-			Handler:    _OnlineMessageRelayService_MsgToUser_Handler,
+			MethodName: "OnlinePushMsg",
+			Handler:    _OnlineMessageRelayService_OnlinePushMsg_Handler,
+		},
+		{
+			MethodName: "GetUsersOnlineStatus",
+			Handler:    _OnlineMessageRelayService_GetUsersOnlineStatus_Handler,
+		},
+		{
+			MethodName: "OnlineBatchPushOneMsg",
+			Handler:    _OnlineMessageRelayService_OnlineBatchPushOneMsg_Handler,
+		},
+		{
+			MethodName: "SuperGroupOnlineBatchPushOneMsg",
+			Handler:    _OnlineMessageRelayService_SuperGroupOnlineBatchPushOneMsg_Handler,
+		},
+		{
+			MethodName: "KickUserOffline",
+			Handler:    _OnlineMessageRelayService_KickUserOffline_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "relay/relay.proto",
 }
 
-func init() { proto.RegisterFile("relay/relay.proto", fileDescriptor_relay_ff2396ffa84abfa7) }
+func init() { proto.RegisterFile("relay/relay.proto", fileDescriptor_relay_eb517eee82ca0aca) }
 
-var fileDescriptor_relay_ff2396ffa84abfa7 = []byte{
-	// 414 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0xc1, 0x6b, 0xdb, 0x30,
-	0x14, 0xc6, 0xf1, 0xbc, 0xa4, 0xcd, 0x4b, 0x93, 0xac, 0xda, 0x28, 0x5a, 0x0f, 0xc3, 0x84, 0x51,
-	0xc2, 0x0e, 0x19, 0x74, 0xb0, 0x4b, 0x6f, 0xab, 0x09, 0x18, 0xe6, 0x76, 0xc8, 0xe9, 0x65, 0x37,
-	0xd7, 0x7d, 0x33, 0x62, 0xb6, 0xe4, 0x48, 0x5e, 0xa1, 0xff, 0xdd, 0xfe, 0xb4, 0xa1, 0xa7, 0x64,
-	0xd1, 0x32, 0x7a, 0x31, 0xfe, 0x7e, 0xef, 0xf3, 0xf3, 0xa7, 0xa7, 0x07, 0xa7, 0x06, 0x9b, 0xf2,
-	0xe9, 0x23, 0x3d, 0x97, 0x9d, 0xd1, 0xbd, 0x66, 0x03, 0x12, 0xf3, 0xdf, 0x31, 0x9c, 0xe4, 0xb6,
-	0x5e, 0xeb, 0x3b, 0x8b, 0x46, 0xe0, 0x86, 0x9d, 0xc1, 0xb0, 0x40, 0xf5, 0x90, 0xa5, 0x3c, 0x4a,
-	0xa2, 0xc5, 0x48, 0x6c, 0x95, 0xe3, 0x02, 0xab, 0xc7, 0x2c, 0xe5, 0x2f, 0x3c, 0xf7, 0x8a, 0x71,
-	0x38, 0xba, 0xd6, 0xaa, 0x47, 0xd5, 0xf3, 0x01, 0x15, 0x76, 0xd2, 0x55, 0x9c, 0xa7, 0xc0, 0x0d,
-	0x1f, 0x26, 0xd1, 0x22, 0x16, 0x3b, 0xc9, 0xce, 0xe1, 0xd8, 0x75, 0x5d, 0xcb, 0x16, 0xf9, 0x11,
-	0x95, 0xfe, 0x6a, 0xf7, 0x55, 0x6e, 0xeb, 0x95, 0xd1, 0x2d, 0x3f, 0x4e, 0xa2, 0xc5, 0x40, 0xec,
-	0x24, 0x4b, 0x60, 0xbc, 0x6d, 0xbd, 0x7e, 0xea, 0x90, 0x8f, 0xa8, 0x1a, 0x22, 0xe7, 0x28, 0xd0,
-	0x5a, 0xa9, 0x15, 0x39, 0xc0, 0x3b, 0x02, 0xe4, 0x1c, 0xb7, 0x1d, 0x9a, 0xb2, 0x97, 0x5a, 0x65,
-	0x29, 0x1f, 0x53, 0xe2, 0x10, 0xf9, 0x1e, 0xe6, 0x11, 0x4d, 0x6e, 0xeb, 0x2c, 0xe5, 0x27, 0xde,
-	0x11, 0x20, 0xf6, 0x0e, 0xe0, 0x5b, 0x53, 0xf6, 0x3f, 0xb4, 0x69, 0xb3, 0x94, 0x4f, 0xe8, 0x27,
-	0x01, 0x61, 0x17, 0x30, 0x75, 0xa7, 0x41, 0x73, 0x23, 0xab, 0x9f, 0x37, 0x65, 0x8b, 0x7c, 0x4a,
-	0x4d, 0x0e, 0x28, 0x7b, 0x0f, 0x13, 0x4f, 0x56, 0x65, 0x85, 0x77, 0xe2, 0x2b, 0x9f, 0x91, 0xed,
-	0x5f, 0x48, 0xa7, 0x6e, 0x24, 0xaa, 0xde, 0xe7, 0x79, 0xe5, 0xf3, 0x04, 0x68, 0x7e, 0x05, 0x93,
-	0xe0, 0x06, 0x6d, 0xc7, 0x3e, 0xc0, 0x4b, 0x83, 0xb6, 0xe3, 0x51, 0x12, 0x2f, 0xc6, 0x97, 0x67,
-	0x4b, 0x7f, 0xed, 0x85, 0x54, 0x75, 0x83, 0x7b, 0x27, 0x79, 0xe6, 0x1b, 0x98, 0x1d, 0x14, 0xdc,
-	0xf9, 0x04, 0xda, 0x5f, 0x4d, 0x7f, 0xad, 0x1f, 0x90, 0xb6, 0x20, 0x16, 0x01, 0x79, 0x76, 0x13,
-	0x2e, 0x60, 0xea, 0xde, 0xdc, 0x24, 0x56, 0x7e, 0x36, 0x31, 0xcd, 0xe6, 0x80, 0x5e, 0x16, 0xf0,
-	0xf6, 0x56, 0x35, 0x52, 0x61, 0x8e, 0xd6, 0x96, 0x35, 0x0a, 0x17, 0xcf, 0x0d, 0x58, 0x56, 0xc8,
-	0x3e, 0xc3, 0x68, 0x9f, 0xe4, 0xf5, 0x36, 0x7a, 0xb8, 0xa0, 0xe7, 0x6f, 0xfe, 0x87, 0xb6, 0xfb,
-	0x72, 0xfa, 0x7d, 0xb6, 0xf4, 0xfb, 0x7d, 0xd5, 0xdd, 0x53, 0xc7, 0xfb, 0x21, 0x2d, 0xfa, 0xa7,
-	0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xe2, 0x9b, 0x83, 0x12, 0xfd, 0x02, 0x00, 0x00,
+var fileDescriptor_relay_eb517eee82ca0aca = []byte{
+	// 749 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xcd, 0x4e, 0xdb, 0x5a,
+	0x10, 0x96, 0x31, 0xe1, 0x67, 0x80, 0x0b, 0x9c, 0x0b, 0x17, 0xe3, 0x45, 0xc8, 0xf5, 0xe2, 0x2a,
+	0xba, 0x6a, 0x13, 0x29, 0xed, 0xae, 0x3b, 0x88, 0xa0, 0x51, 0x89, 0x82, 0x4e, 0x5a, 0xb5, 0x62,
+	0x13, 0x99, 0xe4, 0x24, 0x58, 0x71, 0xe2, 0xc3, 0x19, 0x1b, 0xc4, 0xa6, 0xdb, 0xee, 0xfa, 0x08,
+	0x5d, 0xf4, 0x25, 0xfa, 0x02, 0x7d, 0xb0, 0xea, 0xfc, 0xc4, 0xb5, 0xf3, 0x03, 0x65, 0xc1, 0x06,
+	0x31, 0x73, 0xe6, 0xcc, 0xcc, 0xf7, 0x7d, 0x73, 0x26, 0x86, 0x5d, 0xc1, 0x42, 0xff, 0xbe, 0xaa,
+	0xfe, 0x56, 0xb8, 0x88, 0xe2, 0x88, 0x14, 0x94, 0xe1, 0xfe, 0xdb, 0xe2, 0x6c, 0xdc, 0x69, 0x34,
+	0xab, 0x7c, 0x38, 0xa8, 0xaa, 0x93, 0x2a, 0xf6, 0x86, 0x9d, 0x3b, 0xac, 0xde, 0xa1, 0x8e, 0xf4,
+	0xbe, 0x5a, 0xb0, 0xd3, 0x1a, 0x87, 0xc1, 0x98, 0x5d, 0x24, 0x78, 0xdd, 0xc4, 0x01, 0x65, 0x37,
+	0xa4, 0x04, 0x1b, 0x2d, 0xce, 0x84, 0x1f, 0x07, 0xd1, 0xb8, 0x51, 0x77, 0xac, 0x92, 0x55, 0x5e,
+	0xa7, 0x59, 0x17, 0x79, 0x0d, 0xab, 0x23, 0x1c, 0xd4, 0xfd, 0xd8, 0x77, 0x96, 0x4a, 0x56, 0x79,
+	0xa3, 0xe6, 0x56, 0x90, 0x89, 0x5b, 0x26, 0x3a, 0x3e, 0x0f, 0x3a, 0xdc, 0x17, 0xfe, 0x08, 0x2b,
+	0x4d, 0x1d, 0x41, 0x27, 0xa1, 0xc4, 0x83, 0x4d, 0x9e, 0xe0, 0xf5, 0xfb, 0xe8, 0x03, 0x32, 0xd1,
+	0xa8, 0x3b, 0xb6, 0x4a, 0x9c, 0xf3, 0x79, 0x67, 0xb0, 0x3b, 0xd5, 0x0f, 0x72, 0x52, 0x83, 0x65,
+	0xc1, 0x90, 0x3b, 0x56, 0xc9, 0x2e, 0x6f, 0xd4, 0x8a, 0x15, 0x8d, 0xb5, 0x1d, 0x8c, 0x07, 0x21,
+	0x6b, 0xe2, 0x40, 0x5f, 0xbe, 0x08, 0xfd, 0xb8, 0x1f, 0x89, 0x11, 0x55, 0xb1, 0xde, 0x17, 0x0b,
+	0x0e, 0x65, 0x04, 0x0b, 0xd3, 0x08, 0xca, 0x30, 0x09, 0xe3, 0xf3, 0x00, 0x63, 0xf2, 0x0f, 0xac,
+	0x24, 0xba, 0x09, 0x8d, 0xce, 0x58, 0x69, 0xa5, 0xa5, 0x3f, 0xaf, 0x44, 0x8a, 0x00, 0x51, 0xda,
+	0xb2, 0x02, 0xb5, 0x46, 0x33, 0x1e, 0xef, 0x9b, 0x05, 0x8e, 0xc6, 0x74, 0xec, 0xc7, 0xdd, 0x6b,
+	0xe9, 0x6b, 0x8d, 0xd9, 0x33, 0x73, 0xfd, 0x3f, 0xec, 0x64, 0x79, 0x95, 0xa0, 0x1d, 0xbb, 0x64,
+	0x97, 0xd7, 0xe9, 0x8c, 0xdf, 0x0b, 0xe0, 0x70, 0x41, 0x7f, 0xc8, 0xc9, 0x39, 0xec, 0xa0, 0x82,
+	0x2f, 0xfd, 0x9a, 0x41, 0xa3, 0x43, 0x29, 0xc3, 0xce, 0x5c, 0x96, 0xe9, 0xcc, 0x4d, 0xef, 0x1e,
+	0x0e, 0x16, 0x90, 0x29, 0x69, 0xd4, 0x41, 0x27, 0x51, 0x8f, 0x29, 0x22, 0x6c, 0x9a, 0xf1, 0x48,
+	0xc9, 0x28, 0xeb, 0xde, 0x36, 0xea, 0x8a, 0x86, 0x75, 0x6a, 0x2c, 0xf2, 0x1f, 0xfc, 0x25, 0xff,
+	0x93, 0x79, 0x4e, 0x23, 0x31, 0x32, 0x73, 0x55, 0xa0, 0x53, 0x5e, 0xef, 0x0e, 0x0e, 0xce, 0x58,
+	0x2c, 0x4b, 0xa2, 0x46, 0xdb, 0x8e, 0xfd, 0x38, 0x41, 0x29, 0x42, 0x11, 0x20, 0xf9, 0x4d, 0x93,
+	0xa5, 0x68, 0xca, 0x78, 0xa4, 0x48, 0x51, 0x46, 0x24, 0x5d, 0x3f, 0xeb, 0x22, 0x2e, 0xac, 0x45,
+	0x3c, 0x37, 0xd6, 0xa9, 0xed, 0xfd, 0x58, 0x06, 0x67, 0x7e, 0x65, 0xe4, 0xc4, 0x81, 0x55, 0x26,
+	0x44, 0x0a, 0xb9, 0x40, 0x27, 0xa6, 0xc4, 0xcb, 0x84, 0x68, 0xe2, 0x60, 0x82, 0x57, 0x5b, 0xa4,
+	0x0d, 0x5b, 0x98, 0x74, 0xbb, 0x0c, 0xd1, 0xa8, 0x61, 0x2b, 0x35, 0x5e, 0x1a, 0x35, 0x16, 0x55,
+	0xaa, 0xb4, 0xb3, 0x97, 0x68, 0x3e, 0x07, 0xb9, 0x80, 0xcd, 0xbe, 0x1f, 0x84, 0xac, 0x67, 0x72,
+	0x2e, 0xab, 0x9c, 0x2f, 0x1e, 0xcb, 0x79, 0xaa, 0xee, 0xd4, 0x59, 0xec, 0x07, 0x21, 0xcd, 0x65,
+	0x70, 0x4f, 0x60, 0xcb, 0x54, 0xd4, 0xc7, 0x92, 0x22, 0x6e, 0xb4, 0x36, 0x63, 0x9e, 0xda, 0x12,
+	0x2b, 0xaa, 0xac, 0x13, 0xac, 0xda, 0x72, 0x3f, 0xc1, 0x66, 0xb6, 0x44, 0xe6, 0xd9, 0xda, 0xb9,
+	0x67, 0xfb, 0x64, 0x16, 0xdd, 0xef, 0x56, 0xda, 0x9f, 0xa1, 0x60, 0xd1, 0x4a, 0x58, 0xd0, 0x1b,
+	0xf1, 0x61, 0xaf, 0xa7, 0xba, 0x9a, 0x4c, 0xb0, 0xe6, 0xe5, 0x89, 0x72, 0x18, 0xee, 0xe6, 0xa6,
+	0xf2, 0x3e, 0x03, 0x79, 0x17, 0x74, 0x87, 0x32, 0x41, 0xab, 0xdf, 0x97, 0x09, 0xcc, 0xca, 0x88,
+	0x66, 0x57, 0x46, 0x76, 0x1a, 0x8b, 0x00, 0x13, 0x6a, 0xcd, 0xb8, 0x16, 0x68, 0xc6, 0x23, 0x9f,
+	0xcc, 0xd0, 0xe4, 0xcd, 0xad, 0x86, 0x29, 0xaf, 0xb7, 0x0f, 0x7f, 0xcf, 0xd4, 0x47, 0x5e, 0xfb,
+	0x69, 0x4f, 0x16, 0x46, 0x93, 0x21, 0xfa, 0x03, 0x46, 0x25, 0xd4, 0x36, 0x13, 0xb7, 0x41, 0x97,
+	0x91, 0x63, 0xd8, 0xca, 0x6d, 0x70, 0x72, 0x60, 0xa8, 0x98, 0xfe, 0x9d, 0x71, 0x9d, 0xf9, 0x07,
+	0xc8, 0xc9, 0x47, 0xd8, 0x9b, 0x47, 0x1c, 0x29, 0x3e, 0xc8, 0xea, 0x8d, 0x7b, 0xf4, 0x08, 0xeb,
+	0xe4, 0x12, 0xf6, 0xe7, 0xae, 0x3a, 0x72, 0x94, 0xeb, 0x65, 0x76, 0x51, 0xbb, 0xa5, 0x87, 0x03,
+	0x90, 0x93, 0x1e, 0x1c, 0xb5, 0x13, 0xce, 0xc4, 0x99, 0x88, 0x12, 0xfe, 0x6c, 0x55, 0xde, 0xc2,
+	0xf6, 0x94, 0x26, 0xe4, 0xd0, 0x5c, 0x9a, 0x9d, 0x15, 0xd7, 0x5d, 0x74, 0x84, 0xfc, 0x78, 0xf7,
+	0x72, 0xbb, 0xa2, 0x3f, 0x1b, 0xde, 0xf0, 0x2b, 0x25, 0xe1, 0xd5, 0x8a, 0xfa, 0x2a, 0x78, 0xf5,
+	0x2b, 0x00, 0x00, 0xff, 0xff, 0x01, 0x6a, 0x94, 0x1f, 0x54, 0x08, 0x00, 0x00,
 }

@@ -3,15 +3,16 @@ package gate
 import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
+	"Open_IM/pkg/common/db"
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	pbChat "Open_IM/pkg/proto/chat"
-	open_im_sdk "Open_IM/pkg/proto/sdk_ws"
+	pbRtc "Open_IM/pkg/proto/rtc"
+	sdk_ws "Open_IM/pkg/proto/sdk_ws"
 	"Open_IM/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/gob"
-	"encoding/json"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"runtime"
@@ -19,19 +20,12 @@ import (
 )
 
 func (ws *WServer) msgParse(conn *UserConn, binaryMsg []byte) {
-	//ws online debug data
-	//{"ReqIdentifier":1001,"Token":"123","SendID":"c4ca4238a0b923820dcc509a6f75849b","Time":"123","OperationID":"123","MsgIncr":0}
-	//{"ReqIdentifier":1002,"Token":"123","SendID":"c4ca4238a0b923820dcc509a6f75849b","Time":"123","OperationID":"123","MsgIncr":0,"SeqBegin":1,"SeqEnd":6}
-	//{"ReqIdentifier":1003,"Token":"123","SendID":"c4ca4238a0b923820dcc509a6f75849b",
-	//"RecvID":"a87ff679a2f3e71d9181a67b7542122c","ClientMsgID":"2343","Time":"147878787","OperationID":
-	//"123","MsgIncr":0,"SubMsgType":101,"MsgType":100,"MsgFrom":1,"Content":"sdfsdf"}
 	b := bytes.NewBuffer(binaryMsg)
 	m := Req{}
 	dec := gob.NewDecoder(b)
 	err := dec.Decode(&m)
 	if err != nil {
-		log.ErrorByKv("ws json Unmarshal err", "", "err", err.Error())
-		ws.sendErrMsg(conn, 200, err.Error(), constant.WSDataError, "", "")
+		log.NewError("", "ws Decode  err", err.Error())
 		err = conn.Close()
 		if err != nil {
 			log.NewError("", "ws close err", err.Error())
@@ -39,57 +33,73 @@ func (ws *WServer) msgParse(conn *UserConn, binaryMsg []byte) {
 		return
 	}
 	if err := validate.Struct(m); err != nil {
-		log.ErrorByKv("ws args validate  err", "", "err", err.Error())
+		log.NewError("", "ws args validate  err", err.Error())
 		ws.sendErrMsg(conn, 201, err.Error(), m.ReqIdentifier, m.MsgIncr, m.OperationID)
 		return
 	}
-	//if !utils.VerifyToken(m.Token, m.SendID) {
-	//	ws.sendErrMsg(conn, 202, "token validate err", m.ReqIdentifier, m.MsgIncr,m.OperationID)
-	//	return
-	//}
-	log.InfoByKv("Basic Info Authentication Success", m.OperationID, "reqIdentifier", m.ReqIdentifier, "sendID", m.SendID, "msgIncr", m.MsgIncr)
+	log.NewInfo(m.OperationID, "Basic Info Authentication Success", m.SendID, m.MsgIncr, m.ReqIdentifier)
 
 	switch m.ReqIdentifier {
 	case constant.WSGetNewestSeq:
-		go ws.getSeqReq(conn, &m)
-	case constant.WSPullMsg:
-		go ws.pullMsgReq(conn, &m)
+		log.NewInfo(m.OperationID, "getSeqReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
+		ws.getSeqReq(conn, &m)
 	case constant.WSSendMsg:
-		sendTime := utils.GetCurrentTimestampByNano()
-		go ws.sendMsgReq(conn, &m, sendTime)
+		log.NewInfo(m.OperationID, "sendMsgReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
+		ws.sendMsgReq(conn, &m)
+	case constant.WSSendSignalMsg:
+		log.NewInfo(m.OperationID, "sendSignalMsgReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
+		ws.sendSignalMsgReq(conn, &m)
 	case constant.WSPullMsgBySeqList:
-		go ws.pullMsgBySeqListReq(conn, &m)
+		log.NewInfo(m.OperationID, "pullMsgBySeqListReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
+		ws.pullMsgBySeqListReq(conn, &m)
 	default:
+		log.Error(m.OperationID, "ReqIdentifier failed ", m.SendID, m.MsgIncr, m.ReqIdentifier)
 	}
-	log.NewInfo("", "goroutine num is ", runtime.NumGoroutine())
+	log.NewInfo(m.OperationID, "goroutine num is ", runtime.NumGoroutine())
 }
+
 func (ws *WServer) getSeqReq(conn *UserConn, m *Req) {
 	log.NewInfo(m.OperationID, "Ws call success to getNewSeq", m.MsgIncr, m.SendID, m.ReqIdentifier)
-	pbData := pbChat.GetMaxAndMinSeqReq{}
-	nReply := new(pbChat.GetMaxAndMinSeqResp)
-	pbData.UserID = m.SendID
-	pbData.OperationID = m.OperationID
-	grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName)
-	if grpcConn == nil {
-		log.ErrorByKv("get grpcConn err", pbData.OperationID, "args", m)
-	}
-	msgClient := pbChat.NewChatClient(grpcConn)
-	reply, err := msgClient.GetMaxAndMinSeq(context.Background(), &pbData)
-	if err != nil {
-		log.ErrorByKv("rpc call failed to getSeqReq", pbData.OperationID, "err", err, "pbData", pbData.String())
-		nReply.ErrCode = 200
-		nReply.ErrMsg = err.Error()
-		ws.getSeqResp(conn, m, nReply)
+	nReply := new(sdk_ws.GetMaxAndMinSeqResp)
+	isPass, errCode, errMsg, data := ws.argsValidate(m, constant.WSGetNewestSeq, m.OperationID)
+	log.Info(m.OperationID, "argsValidate ", isPass, errCode, errMsg)
+	if isPass {
+		rpcReq := sdk_ws.GetMaxAndMinSeqReq{}
+		rpcReq.GroupIDList = data.(sdk_ws.GetMaxAndMinSeqReq).GroupIDList
+		rpcReq.UserID = m.SendID
+		rpcReq.OperationID = m.OperationID
+		log.Debug(m.OperationID, "Ws call success to getMaxAndMinSeq", m.SendID, m.ReqIdentifier, m.MsgIncr, data.(sdk_ws.GetMaxAndMinSeqReq).GroupIDList)
+		grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, rpcReq.OperationID)
+		if grpcConn == nil {
+			errMsg := rpcReq.OperationID + "getcdv3.GetConn == nil"
+			nReply.ErrCode = 500
+			nReply.ErrMsg = errMsg
+			log.NewError(rpcReq.OperationID, errMsg)
+			ws.getSeqResp(conn, m, nReply)
+			return
+		}
+		msgClient := pbChat.NewChatClient(grpcConn)
+		rpcReply, err := msgClient.GetMaxAndMinSeq(context.Background(), &rpcReq)
+		if err != nil {
+			nReply.ErrCode = 500
+			nReply.ErrMsg = err.Error()
+			log.Error(rpcReq.OperationID, "rpc call failed to GetMaxAndMinSeq ", nReply.String())
+			ws.getSeqResp(conn, m, nReply)
+		} else {
+			log.NewInfo(rpcReq.OperationID, "rpc call success to getSeqReq", rpcReply.String())
+			ws.getSeqResp(conn, m, rpcReply)
+		}
 	} else {
-		log.InfoByKv("rpc call success to getSeqReq", pbData.OperationID, "replyData", reply.String())
-		ws.getSeqResp(conn, m, reply)
+		nReply.ErrCode = errCode
+		nReply.ErrMsg = errMsg
+		log.Error(m.OperationID, "argsValidate failed send resp: ", nReply.String())
+		ws.getSeqResp(conn, m, nReply)
 	}
 }
-func (ws *WServer) getSeqResp(conn *UserConn, m *Req, pb *pbChat.GetMaxAndMinSeqResp) {
-	var mReplyData open_im_sdk.GetMaxAndMinSeqResp
-	mReplyData.MaxSeq = pb.GetMaxSeq()
-	mReplyData.MinSeq = pb.GetMinSeq()
-	b, _ := proto.Marshal(&mReplyData)
+
+func (ws *WServer) getSeqResp(conn *UserConn, m *Req, pb *sdk_ws.GetMaxAndMinSeqResp) {
+
+	b, _ := proto.Marshal(pb)
 	mReply := Resp{
 		ReqIdentifier: m.ReqIdentifier,
 		MsgIncr:       m.MsgIncr,
@@ -98,60 +108,51 @@ func (ws *WServer) getSeqResp(conn *UserConn, m *Req, pb *pbChat.GetMaxAndMinSeq
 		OperationID:   m.OperationID,
 		Data:          b,
 	}
+	log.Debug(m.OperationID, "getSeqResp come  here req: ", pb.String(), "send resp: ",
+		mReply.ReqIdentifier, mReply.MsgIncr, mReply.ErrCode, mReply.ErrMsg)
 	ws.sendMsg(conn, mReply)
 }
-func (ws *WServer) pullMsgReq(conn *UserConn, m *Req) {
-	log.NewInfo(m.OperationID, "Ws call success to pullMsgReq", m.ReqIdentifier, m.MsgIncr, m.SendID)
-	nReply := new(pbChat.PullMessageResp)
-	isPass, errCode, errMsg, data := ws.argsValidate(m, constant.WSPullMsg)
+
+func (ws *WServer) pullMsgBySeqListReq(conn *UserConn, m *Req) {
+	log.NewInfo(m.OperationID, "Ws call success to pullMsgBySeqListReq start", m.SendID, m.ReqIdentifier, m.MsgIncr, string(m.Data))
+	nReply := new(sdk_ws.PullMessageBySeqListResp)
+	isPass, errCode, errMsg, data := ws.argsValidate(m, constant.WSPullMsgBySeqList, m.OperationID)
 	if isPass {
-		pbData := pbChat.PullMessageReq{}
-		pbData.UserID = m.SendID
-		pbData.OperationID = m.OperationID
-		pbData.SeqBegin = data.(SeqData).SeqBegin
-		pbData.SeqEnd = data.(SeqData).SeqEnd
-		grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName)
+		rpcReq := sdk_ws.PullMessageBySeqListReq{}
+		rpcReq.SeqList = data.(sdk_ws.PullMessageBySeqListReq).SeqList
+		rpcReq.UserID = m.SendID
+		rpcReq.OperationID = m.OperationID
+		rpcReq.GroupSeqList = data.(sdk_ws.PullMessageBySeqListReq).GroupSeqList
+		log.NewInfo(m.OperationID, "Ws call success to pullMsgBySeqListReq middle", m.SendID, m.ReqIdentifier, m.MsgIncr, data.(sdk_ws.PullMessageBySeqListReq).SeqList)
+		grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, m.OperationID)
+		if grpcConn == nil {
+			errMsg := rpcReq.OperationID + "getcdv3.GetConn == nil"
+			nReply.ErrCode = 500
+			nReply.ErrMsg = errMsg
+			log.NewError(rpcReq.OperationID, errMsg)
+			ws.pullMsgBySeqListResp(conn, m, nReply)
+			return
+		}
 		msgClient := pbChat.NewChatClient(grpcConn)
-		reply, err := msgClient.PullMessage(context.Background(), &pbData)
+		reply, err := msgClient.PullMessageBySeqList(context.Background(), &rpcReq)
 		if err != nil {
-			log.ErrorByKv("PullMessage error", pbData.OperationID, "err", err.Error())
+			log.NewError(rpcReq.OperationID, "pullMsgBySeqListReq err", err.Error())
 			nReply.ErrCode = 200
 			nReply.ErrMsg = err.Error()
-			ws.pullMsgResp(conn, m, nReply)
+			ws.pullMsgBySeqListResp(conn, m, nReply)
 		} else {
-			log.InfoByKv("rpc call success to pullMsgRep", pbData.OperationID, "ReplyArgs", reply.String(), "maxSeq", reply.GetMaxSeq(),
-				"MinSeq", reply.GetMinSeq(), "singLen", len(reply.GetSingleUserMsg()), "groupLen", len(reply.GetGroupUserMsg()))
-			ws.pullMsgResp(conn, m, reply)
+			log.NewInfo(rpcReq.OperationID, "rpc call success to pullMsgBySeqListReq", reply.String(), len(reply.List))
+			ws.pullMsgBySeqListResp(conn, m, reply)
 		}
 	} else {
 		nReply.ErrCode = errCode
 		nReply.ErrMsg = errMsg
-		ws.pullMsgResp(conn, m, nReply)
+		ws.pullMsgBySeqListResp(conn, m, nReply)
 	}
 }
-func (ws *WServer) pullMsgResp(conn *UserConn, m *Req, pb *pbChat.PullMessageResp) {
-	log.NewInfo(m.OperationID, "pullMsgResp come  here ", pb.String())
-	var mReplyData open_im_sdk.PullMessageBySeqListResp
-	a, err := json.Marshal(pb.SingleUserMsg)
-	if err != nil {
-		log.NewError(m.OperationID, "GetSingleUserMsg,json marshal,err", err.Error())
-	}
-	log.NewInfo(m.OperationID, "pullMsgResp json is ", len(pb.SingleUserMsg))
-	err = json.Unmarshal(a, &mReplyData.SingleUserMsg)
-	if err != nil {
-		log.NewError(m.OperationID, "SingleUserMsg,json Unmarshal,err", err.Error())
-	}
-	b, err := json.Marshal(pb.GroupUserMsg)
-	if err != nil {
-		log.NewError(m.OperationID, "mReplyData,json marshal,err", err.Error())
-	}
-	err = json.Unmarshal(b, &mReplyData.GroupUserMsg)
-	if err != nil {
-		log.NewError(m.OperationID, "test SingleUserMsg,json Unmarshal,err", err.Error())
-	}
-	c, err := proto.Marshal(&mReplyData)
-	log.NewInfo(m.OperationID, "test info is ", len(mReplyData.SingleUserMsg), mReplyData.SingleUserMsg)
-
+func (ws *WServer) pullMsgBySeqListResp(conn *UserConn, m *Req, pb *sdk_ws.PullMessageBySeqListResp) {
+	log.NewInfo(m.OperationID, "pullMsgBySeqListResp come  here ", pb.String())
+	c, _ := proto.Marshal(pb)
 	mReply := Resp{
 		ReqIdentifier: m.ReqIdentifier,
 		MsgIncr:       m.MsgIncr,
@@ -160,92 +161,61 @@ func (ws *WServer) pullMsgResp(conn *UserConn, m *Req, pb *pbChat.PullMessageRes
 		OperationID:   m.OperationID,
 		Data:          c,
 	}
-	log.NewInfo(m.OperationID, "pullMsgResp all data  is ", mReply.ReqIdentifier, mReply.MsgIncr, mReply.ErrCode, mReply.ErrMsg,
+	log.NewInfo(m.OperationID, "pullMsgBySeqListResp all data  is ", mReply.ReqIdentifier, mReply.MsgIncr, mReply.ErrCode, mReply.ErrMsg,
 		len(mReply.Data))
 
 	ws.sendMsg(conn, mReply)
 
 }
-func (ws *WServer) pullMsgBySeqListReq(conn *UserConn, m *Req) {
-	log.NewInfo(m.OperationID, "Ws call success to pullMsgBySeqListReq start", m.SendID, m.ReqIdentifier, m.MsgIncr)
-	nReply := new(pbChat.PullMessageResp)
-	isPass, errCode, errMsg, data := ws.argsValidate(m, constant.WSPullMsgBySeqList)
-	log.NewInfo(m.OperationID, "Ws call success to pullMsgBySeqListReq middle", m.SendID, m.ReqIdentifier, m.MsgIncr, data.(open_im_sdk.PullMessageBySeqListReq).SeqList)
+func (ws *WServer) sendMsgReq(conn *UserConn, m *Req) {
+	sendMsgAllCountLock.Lock()
+	sendMsgAllCount++
+	sendMsgAllCountLock.Unlock()
+	log.NewInfo(m.OperationID, "Ws call success to sendMsgReq start", m.MsgIncr, m.ReqIdentifier, m.SendID)
+
+	nReply := new(pbChat.SendMsgResp)
+	isPass, errCode, errMsg, pData := ws.argsValidate(m, constant.WSSendMsg, m.OperationID)
 	if isPass {
-		pbData := pbChat.PullMessageBySeqListReq{}
-		pbData.SeqList = data.(open_im_sdk.PullMessageBySeqListReq).SeqList
-		pbData.UserID = m.SendID
-		pbData.OperationID = m.OperationID
-		grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName)
-		msgClient := pbChat.NewChatClient(grpcConn)
-		reply, err := msgClient.PullMessageBySeqList(context.Background(), &pbData)
-		if err != nil {
-			log.NewError(pbData.OperationID, "pullMsgBySeqListReq err", err.Error())
-			nReply.ErrCode = 200
-			nReply.ErrMsg = err.Error()
-			ws.pullMsgResp(conn, m, nReply)
-		} else {
-			log.NewInfo(pbData.OperationID, "rpc call success to pullMsgBySeqListReq", reply.String(), reply.GetMaxSeq(), reply.GetMinSeq(), len(reply.GetSingleUserMsg()), len(reply.GetGroupUserMsg()))
-			ws.pullMsgResp(conn, m, reply)
+		data := pData.(sdk_ws.MsgData)
+		pbData := pbChat.SendMsgReq{
+			Token:       m.Token,
+			OperationID: m.OperationID,
+			MsgData:     &data,
 		}
-	} else {
-		nReply.ErrCode = errCode
-		nReply.ErrMsg = errMsg
-		ws.pullMsgResp(conn, m, nReply)
-	}
-}
-func (ws *WServer) sendMsgReq(conn *UserConn, m *Req, sendTime int64) {
-	log.NewInfo(m.OperationID, "Ws call success to sendMsgReq start", m.MsgIncr, m.ReqIdentifier, m.SendID, sendTime)
-	nReply := new(pbChat.UserSendMsgResp)
-	isPass, errCode, errMsg, pData := ws.argsValidate(m, constant.WSSendMsg)
-	if isPass {
-		data := pData.(open_im_sdk.UserSendMsgReq)
-		pbData := pbChat.UserSendMsgReq{
-			ReqIdentifier:  m.ReqIdentifier,
-			Token:          m.Token,
-			SendID:         m.SendID,
-			OperationID:    m.OperationID,
-			PlatformID:     data.PlatformID,
-			SessionType:    data.SessionType,
-			MsgFrom:        data.MsgFrom,
-			ContentType:    data.ContentType,
-			RecvID:         data.RecvID,
-			ForceList:      data.ForceList,
-			SenderNickName: data.SenderNickName,
-			SenderFaceURL:  data.SenderFaceURL,
-			Content:        data.Content,
-			Options:        utils.MapIntToJsonString(data.Options),
-			ClientMsgID:    data.ClientMsgID,
-			SendTime:       sendTime,
+		log.NewInfo(m.OperationID, "Ws call success to sendMsgReq middle", m.ReqIdentifier, m.SendID, m.MsgIncr, data.String())
+		etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, m.OperationID)
+		if etcdConn == nil {
+			errMsg := m.OperationID + "getcdv3.GetConn == nil"
+			nReply.ErrCode = 500
+			nReply.ErrMsg = errMsg
+			log.NewError(m.OperationID, errMsg)
+			ws.sendMsgResp(conn, m, nReply)
+			return
 		}
-		log.NewInfo(m.OperationID, "Ws call success to sendMsgReq middle", m.ReqIdentifier, m.SendID, m.MsgIncr, data)
-		etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName)
 		client := pbChat.NewChatClient(etcdConn)
-		reply, err := client.UserSendMsg(context.Background(), &pbData)
+		reply, err := client.SendMsg(context.Background(), &pbData)
 		if err != nil {
 			log.NewError(pbData.OperationID, "UserSendMsg err", err.Error())
 			nReply.ErrCode = 200
 			nReply.ErrMsg = err.Error()
-			ws.sendMsgResp(conn, m, nReply, sendTime)
+			ws.sendMsgResp(conn, m, nReply)
 		} else {
 			log.NewInfo(pbData.OperationID, "rpc call success to sendMsgReq", reply.String())
-			ws.sendMsgResp(conn, m, reply, sendTime)
+			ws.sendMsgResp(conn, m, reply)
 		}
 
 	} else {
 		nReply.ErrCode = errCode
 		nReply.ErrMsg = errMsg
-		ws.sendMsgResp(conn, m, nReply, sendTime)
+		ws.sendMsgResp(conn, m, nReply)
 	}
 
 }
-func (ws *WServer) sendMsgResp(conn *UserConn, m *Req, pb *pbChat.UserSendMsgResp, sendTime int64) {
-	// := make(map[string]interface{})
-
-	var mReplyData open_im_sdk.UserSendMsgResp
+func (ws *WServer) sendMsgResp(conn *UserConn, m *Req, pb *pbChat.SendMsgResp) {
+	var mReplyData sdk_ws.UserSendMsgResp
 	mReplyData.ClientMsgID = pb.GetClientMsgID()
 	mReplyData.ServerMsgID = pb.GetServerMsgID()
-	mReplyData.SendTime = sendTime
+	mReplyData.SendTime = pb.GetSendTime()
 	b, _ := proto.Marshal(&mReplyData)
 	mReply := Resp{
 		ReqIdentifier: m.ReqIdentifier,
@@ -258,17 +228,98 @@ func (ws *WServer) sendMsgResp(conn *UserConn, m *Req, pb *pbChat.UserSendMsgRes
 	ws.sendMsg(conn, mReply)
 }
 
+func (ws *WServer) sendSignalMsgReq(conn *UserConn, m *Req) {
+	log.NewInfo(m.OperationID, "Ws call success to sendSignalMsgReq start", m.MsgIncr, m.ReqIdentifier, m.SendID, string(m.Data))
+	nReply := new(pbChat.SendMsgResp)
+	isPass, errCode, errMsg, pData := ws.argsValidate(m, constant.WSSendSignalMsg, m.OperationID)
+	if isPass {
+		signalResp := pbRtc.SignalResp{}
+		etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImRealTimeCommName, m.OperationID)
+		if etcdConn == nil {
+			errMsg := m.OperationID + "getcdv3.GetConn == nil"
+			log.NewError(m.OperationID, errMsg)
+			ws.sendSignalMsgResp(conn, 204, errMsg, m, &signalResp)
+			return
+		}
+		rtcClient := pbRtc.NewRtcServiceClient(etcdConn)
+		req := &pbRtc.SignalMessageAssembleReq{
+			SignalReq:   pData.(*pbRtc.SignalReq),
+			OperationID: m.OperationID,
+		}
+		respPb, err := rtcClient.SignalMessageAssemble(context.Background(), req)
+		if err != nil {
+			log.NewError(m.OperationID, utils.GetSelfFuncName(), "SignalMessageAssemble", err.Error(), config.Config.RpcRegisterName.OpenImRealTimeCommName)
+			ws.sendSignalMsgResp(conn, 204, "grpc SignalMessageAssemble failed: "+err.Error(), m, &signalResp)
+			return
+		}
+		signalResp.Payload = respPb.SignalResp.Payload
+		msgData := sdk_ws.MsgData{}
+		utils.CopyStructFields(&msgData, respPb.MsgData)
+		log.NewInfo(m.OperationID, utils.GetSelfFuncName(), respPb.String())
+		if respPb.IsPass {
+			pbData := pbChat.SendMsgReq{
+				Token:       m.Token,
+				OperationID: m.OperationID,
+				MsgData:     &msgData,
+			}
+			log.NewInfo(m.OperationID, utils.GetSelfFuncName(), "pbData: ", pbData)
+			log.NewInfo(m.OperationID, "Ws call success to sendSignalMsgReq middle", m.ReqIdentifier, m.SendID, m.MsgIncr, msgData)
+			etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, m.OperationID)
+			if etcdConn == nil {
+				errMsg := m.OperationID + "getcdv3.GetConn == nil"
+				log.NewError(m.OperationID, errMsg)
+				ws.sendSignalMsgResp(conn, 200, errMsg, m, &signalResp)
+				return
+			}
+			client := pbChat.NewChatClient(etcdConn)
+			reply, err := client.SendMsg(context.Background(), &pbData)
+			if err != nil {
+				log.NewError(pbData.OperationID, utils.GetSelfFuncName(), "rpc sendMsg err", err.Error())
+				nReply.ErrCode = 200
+				nReply.ErrMsg = err.Error()
+				ws.sendSignalMsgResp(conn, 200, err.Error(), m, &signalResp)
+			} else {
+				log.NewInfo(pbData.OperationID, "rpc call success to sendMsgReq", reply.String(), signalResp.String(), m)
+				ws.sendSignalMsgResp(conn, 0, "", m, &signalResp)
+			}
+		} else {
+			log.NewError(m.OperationID, utils.GetSelfFuncName(), respPb.IsPass, respPb.CommonResp.ErrCode, respPb.CommonResp.ErrMsg)
+			ws.sendSignalMsgResp(conn, respPb.CommonResp.ErrCode, respPb.CommonResp.ErrMsg, m, &signalResp)
+		}
+	} else {
+		ws.sendSignalMsgResp(conn, errCode, errMsg, m, nil)
+	}
+
+}
+func (ws *WServer) sendSignalMsgResp(conn *UserConn, errCode int32, errMsg string, m *Req, pb *pbRtc.SignalResp) {
+	// := make(map[string]interface{})
+	log.Debug(m.OperationID, "sendSignalMsgResp is", pb.String())
+	b, _ := proto.Marshal(pb)
+	mReply := Resp{
+		ReqIdentifier: m.ReqIdentifier,
+		MsgIncr:       m.MsgIncr,
+		ErrCode:       errCode,
+		ErrMsg:        errMsg,
+		OperationID:   m.OperationID,
+		Data:          b,
+	}
+	ws.sendMsg(conn, mReply)
+}
 func (ws *WServer) sendMsg(conn *UserConn, mReply interface{}) {
 	var b bytes.Buffer
 	enc := gob.NewEncoder(&b)
 	err := enc.Encode(mReply)
 	if err != nil {
-		log.NewError(mReply.(Resp).OperationID, mReply.(Resp).ReqIdentifier, mReply.(Resp).ErrCode, mReply.(Resp).ErrMsg, "Encode Msg error", conn.RemoteAddr().String(), ws.getUserUid(conn), err.Error())
+		//	uid, platform := ws.getUserUid(conn)
+		log.NewError(mReply.(Resp).OperationID, mReply.(Resp).ReqIdentifier, mReply.(Resp).ErrCode, mReply.(Resp).ErrMsg, "Encode Msg error", conn.RemoteAddr().String(), err.Error())
 		return
 	}
 	err = ws.writeMsg(conn, websocket.BinaryMessage, b.Bytes())
 	if err != nil {
-		log.NewError(mReply.(Resp).OperationID, mReply.(Resp).ReqIdentifier, mReply.(Resp).ErrCode, mReply.(Resp).ErrMsg, "WS WriteMsg error", conn.RemoteAddr().String(), ws.getUserUid(conn), err.Error())
+		//	uid, platform := ws.getUserUid(conn)
+		log.NewError(mReply.(Resp).OperationID, mReply.(Resp).ReqIdentifier, mReply.(Resp).ErrCode, mReply.(Resp).ErrMsg, "ws writeMsg error", conn.RemoteAddr().String(), err.Error())
+	} else {
+		log.Debug(mReply.(Resp).OperationID, mReply.(Resp).ReqIdentifier, mReply.(Resp).ErrCode, mReply.(Resp).ErrMsg, "ws write response success")
 	}
 }
 func (ws *WServer) sendErrMsg(conn *UserConn, errCode int32, errMsg string, reqIdentifier int32, msgIncr string, operationID string) {
@@ -280,4 +331,20 @@ func (ws *WServer) sendErrMsg(conn *UserConn, errCode int32, errMsg string, reqI
 		OperationID:   operationID,
 	}
 	ws.sendMsg(conn, mReply)
+}
+
+func SetTokenKicked(userID string, platformID int, operationID string) {
+	m, err := db.DB.GetTokenMapByUidPid(userID, constant.PlatformIDToName(platformID))
+	if err != nil {
+		log.Error(operationID, "GetTokenMapByUidPid failed ", err.Error(), userID, constant.PlatformIDToName(platformID))
+		return
+	}
+	for k, _ := range m {
+		m[k] = constant.KickedToken
+	}
+	err = db.DB.SetTokenMapByUidPid(userID, platformID, m)
+	if err != nil {
+		log.Error(operationID, "SetTokenMapByUidPid failed ", err.Error(), userID, constant.PlatformIDToName(platformID))
+		return
+	}
 }
