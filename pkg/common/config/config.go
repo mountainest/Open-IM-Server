@@ -71,7 +71,12 @@ type config struct {
 			SecretAccessKey     string `yaml:"secretAccessKey"`
 			EndpointInner       string `yaml:"endpointInner"`
 			EndpointInnerEnable bool   `yaml:"endpointInnerEnable"`
+			StorageTime         int    `yaml:"storageTime"`
 		} `yaml:"minio"`
+	}
+
+	Dtm struct {
+		ServerURL string `json:"serverURL"`
 	}
 
 	Mysql struct {
@@ -123,21 +128,22 @@ type config struct {
 		OpenImCachePort          []int `yaml:"openImCachePort"`
 	}
 	RpcRegisterName struct {
-		OpenImStatisticsName         string `yaml:"openImStatisticsName"`
-		OpenImUserName               string `yaml:"openImUserName"`
-		OpenImFriendName             string `yaml:"openImFriendName"`
-		OpenImOfflineMessageName     string `yaml:"openImOfflineMessageName"`
-		OpenImPushName               string `yaml:"openImPushName"`
-		OpenImOnlineMessageRelayName string `yaml:"openImOnlineMessageRelayName"`
-		OpenImGroupName              string `yaml:"openImGroupName"`
-		OpenImAuthName               string `yaml:"openImAuthName"`
-		OpenImMessageCMSName         string `yaml:"openImMessageCMSName"`
-		OpenImAdminCMSName           string `yaml:"openImAdminCMSName"`
-		OpenImOfficeName             string `yaml:"openImOfficeName"`
-		OpenImOrganizationName       string `yaml:"openImOrganizationName"`
-		OpenImConversationName       string `yaml:"openImConversationName"`
-		OpenImCacheName              string `yaml:"openImCacheName"`
-		OpenImRealTimeCommName       string `yaml:"openImRealTimeCommName"`
+		OpenImStatisticsName string `yaml:"openImStatisticsName"`
+		OpenImUserName       string `yaml:"openImUserName"`
+		OpenImFriendName     string `yaml:"openImFriendName"`
+		//	OpenImOfflineMessageName     string `yaml:"openImOfflineMessageName"`
+		OpenImMsgName          string `yaml:"openImMsgName"`
+		OpenImPushName         string `yaml:"openImPushName"`
+		OpenImRelayName        string `yaml:"openImRelayName"`
+		OpenImGroupName        string `yaml:"openImGroupName"`
+		OpenImAuthName         string `yaml:"openImAuthName"`
+		OpenImMessageCMSName   string `yaml:"openImMessageCMSName"`
+		OpenImAdminCMSName     string `yaml:"openImAdminCMSName"`
+		OpenImOfficeName       string `yaml:"openImOfficeName"`
+		OpenImOrganizationName string `yaml:"openImOrganizationName"`
+		OpenImConversationName string `yaml:"openImConversationName"`
+		OpenImCacheName        string `yaml:"openImCacheName"`
+		OpenImRealTimeCommName string `yaml:"openImRealTimeCommName"`
 	}
 	Etcd struct {
 		EtcdSchema string   `yaml:"etcdSchema"`
@@ -190,6 +196,10 @@ type config struct {
 			Enable       bool   `yaml:"enable"`
 			Intent       string `yaml:"intent"`
 			MasterSecret string `yaml:"masterSecret"`
+		}
+		Fcm struct {
+			ServiceAccount string `yaml:"serviceAccount"`
+			Enable         bool   `yaml:"enable"`
 		}
 	}
 	Manager struct {
@@ -244,15 +254,17 @@ type config struct {
 	}
 
 	Callback struct {
-		CallbackUrl                 string         `yaml:"callbackUrl"`
-		CallbackBeforeSendSingleMsg callBackConfig `yaml:"callbackBeforeSendSingleMsg"`
-		CallbackAfterSendSingleMsg  callBackConfig `yaml:"callbackAfterSendSingleMsg"`
-		CallbackBeforeSendGroupMsg  callBackConfig `yaml:"callbackBeforeSendGroupMsg"`
-		CallbackAfterSendGroupMsg   callBackConfig `yaml:"callbackAfterSendGroupMsg"`
-		CallbackWordFilter          callBackConfig `yaml:"callbackWordFilter"`
-		CallbackUserOnline          callBackConfig `yaml:"callbackUserOnline"`
-		CallbackUserOffline         callBackConfig `yaml:"callbackUserOffline"`
-		CallbackOfflinePush         callBackConfig `yaml:"callbackOfflinePush"`
+		CallbackUrl                        string         `yaml:"callbackUrl"`
+		CallbackBeforeSendSingleMsg        callBackConfig `yaml:"callbackBeforeSendSingleMsg"`
+		CallbackAfterSendSingleMsg         callBackConfig `yaml:"callbackAfterSendSingleMsg"`
+		CallbackBeforeSendGroupMsg         callBackConfig `yaml:"callbackBeforeSendGroupMsg"`
+		CallbackAfterSendGroupMsg          callBackConfig `yaml:"callbackAfterSendGroupMsg"`
+		CallbackWordFilter                 callBackConfig `yaml:"callbackWordFilter"`
+		CallbackUserOnline                 callBackConfig `yaml:"callbackUserOnline"`
+		CallbackUserOffline                callBackConfig `yaml:"callbackUserOffline"`
+		CallbackOfflinePush                callBackConfig `yaml:"callbackOfflinePush"`
+		CallbackOnlinePush                 callBackConfig `yaml:"callbackOnlinePush"`
+		CallbackBeforeSuperGroupOnlinePush callBackConfig `yaml:"callbackSuperGroupOnlinePush"`
 	} `yaml:"callback"`
 	Notification struct {
 		///////////////////////group/////////////////////////////
@@ -499,13 +511,13 @@ type PDefaultTips struct {
 
 func init() {
 	cfgName := os.Getenv("CONFIG_NAME")
-	fmt.Println(Root, cfgName)
+	fmt.Println("get config path is:", Root, cfgName)
 
-	if len(cfgName) == 0 {
-		cfgName = Root + "/config/config.yaml"
+	if len(cfgName) != 0 {
+		Root = cfgName
 	}
 
-	bytes, err := ioutil.ReadFile(cfgName)
+	bytes, err := ioutil.ReadFile(filepath.Join(Root, "config", "config.yaml"))
 	if err != nil {
 		panic(err.Error())
 	}

@@ -21,7 +21,6 @@ import (
 // @Tags 鉴权认证
 // @ID UserRegister
 // @Accept json
-// @Param token header string true "im token"
 // @Param req body api.UserRegisterReq true "secret为openIM密钥, 详细见服务端config.yaml secret字段 <br> platform为平台ID <br> ex为拓展字段 <br> gender为性别, 0为女, 1为男"
 // @Produce json
 // @Success 0 {object} api.UserRegisterResp
@@ -90,7 +89,6 @@ func UserRegister(c *gin.Context) {
 // @Tags 鉴权认证
 // @ID UserToken
 // @Accept json
-// @Param token header string true "im token"
 // @Param req body api.UserTokenReq true "secret为openIM密钥, 详细见服务端config.yaml secret字段 <br> platform为平台ID"
 // @Produce json
 // @Success 0 {object} api.UserTokenResp
@@ -152,7 +150,7 @@ func ParseToken(c *gin.Context) {
 	if err := c.BindJSON(&params); err != nil {
 		errMsg := " BindJSON failed " + err.Error()
 		log.NewError("0", errMsg)
-		c.JSON(http.StatusBadRequest, gin.H{"errCode": 400, "errMsg": errMsg})
+		c.JSON(http.StatusOK, gin.H{"errCode": 1001, "errMsg": errMsg})
 		return
 	}
 
@@ -161,9 +159,9 @@ func ParseToken(c *gin.Context) {
 	var expireTime int64
 	ok, _, errInfo, expireTime = token_verify.GetUserIDFromTokenExpireTime(c.Request.Header.Get("token"), params.OperationID)
 	if !ok {
-		errMsg := params.OperationID + " " + "GetUserIDFromTokenExpireTime failed " + errInfo + " token:" + c.Request.Header.Get("token")
+		errMsg := params.OperationID + " " + "GetUserIDFromTokenExpireTime failed " + errInfo
 		log.NewError(params.OperationID, errMsg)
-		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		c.JSON(http.StatusOK, gin.H{"errCode": 1001, "errMsg": errMsg})
 		return
 	}
 
