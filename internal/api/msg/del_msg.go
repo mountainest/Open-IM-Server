@@ -1,4 +1,4 @@
-package apiChat
+package msg
 
 import (
 	api "Open_IM/pkg/base_info"
@@ -7,7 +7,7 @@ import (
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/common/token_verify"
 	"Open_IM/pkg/grpc-etcdv3/getcdv3"
-	rpc "Open_IM/pkg/proto/chat"
+	rpc "Open_IM/pkg/proto/msg"
 	pbCommon "Open_IM/pkg/proto/sdk_ws"
 	"Open_IM/pkg/utils"
 	"context"
@@ -54,14 +54,14 @@ func DelMsg(c *gin.Context) {
 		return
 	}
 
-	grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, req.OperationID)
+	grpcConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImMsgName, req.OperationID)
 	if grpcConn == nil {
 		errMsg := req.OperationID + " getcdv3.GetConn == nil"
 		log.NewError(req.OperationID, errMsg)
 		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
 		return
 	}
-	msgClient := rpc.NewChatClient(grpcConn)
+	msgClient := rpc.NewMsgClient(grpcConn)
 	respPb, err := msgClient.DelMsgList(context.Background(), &reqPb)
 	if err != nil {
 		log.NewError(req.OperationID, utils.GetSelfFuncName(), "DelMsgList failed", err.Error(), reqPb)
@@ -78,15 +78,18 @@ func DelSuperGroupMsg(c *gin.Context) {
 		req  api.DelSuperGroupMsgReq
 		resp api.DelSuperGroupMsgResp
 	)
+	rpcReq := &rpc.DelSuperGroupMsgReq{}
+	utils.CopyStructFields(req, &req)
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"errCode": 400, "errMsg": err.Error()})
 		return
 	}
 	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), "req:", req)
-
-	ok, opUserID, errInfo := token_verify.GetUserIDFromToken(c.Request.Header.Get("token"), req.OperationID)
+	var ok bool
+	var errInfo string
+	ok, rpcReq.OpUserID, errInfo = token_verify.GetUserIDFromToken(c.Request.Header.Get("token"), req.OperationID)
 	if !ok {
-		errMsg := req.OperationID + " " + opUserID + " " + "GetUserIDFromToken failed " + errInfo + " token:" + c.Request.Header.Get("token")
+		errMsg := req.OperationID + " " + rpcReq.OpUserID + " " + "GetUserIDFromToken failed " + errInfo + " token:" + c.Request.Header.Get("token")
 		log.NewError(req.OperationID, errMsg)
 		c.JSON(http.StatusBadRequest, gin.H{"errCode": 500, "errMsg": errMsg})
 		return
@@ -127,28 +130,42 @@ func DelSuperGroupMsg(c *gin.Context) {
 		c.JSON(http.StatusOK, resp)
 	}
 	log.Info(req.OperationID, "", "api DelSuperGroupMsg call start..., [data: %s]", pbData.String())
-	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, req.OperationID)
+	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImMsgName, req.OperationID)
 	if etcdConn == nil {
 		errMsg := req.OperationID + "getcdv3.GetConn == nil"
 		log.NewError(req.OperationID, errMsg)
 		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
 		return
 	}
-	client := rpc.NewChatClient(etcdConn)
+	client := rpc.NewMsgClient(etcdConn)
 
 	log.Info(req.OperationID, "", "api DelSuperGroupMsg call, api call rpc...")
-
-	RpcResp, err := client.SendMsg(context.Background(), &pbData)
-	if err != nil {
-		log.NewError(req.OperationID, "call delete UserSendMsg rpc server failed", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": "call UserSendMsg  rpc server failed"})
-		return
+	if req.IsAllDelete  {
+		RpcResp, err := client.DelSuperGroupMsg(context.Background(),rpcReq)
+		if err != nil {
+			log.NewError(req.OperationID, "call delete DelSuperGroupMsg rpc server failed", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": "call DelSuperGroupMsg  rpc server failed"})
+			return
+		}
+		log.Info(req.OperationID, "", "api DelSuperGroupMsg call end..., [data: %s] [reply: %s]", pbData.String(), RpcResp.String())
+		resp.ErrCode = RpcResp.ErrCode
+		resp.ErrMsg = RpcResp.ErrMsg
+		log.NewInfo(req.OperationID, utils.GetSelfFuncName(), resp)
+		c.JSON(http.StatusOK, resp)
+	}else{
+		RpcResp, err := client.SendMsg(context.Background(), &pbData)
+		if err != nil {
+			log.NewError(req.OperationID, "call delete UserSendMsg rpc server failed", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": "call UserSendMsg  rpc server failed"})
+			return
+		}
+		log.Info(req.OperationID, "", "api DelSuperGroupMsg call end..., [data: %s] [reply: %s]", pbData.String(), RpcResp.String())
+		resp.ErrCode = RpcResp.ErrCode
+		resp.ErrMsg = RpcResp.ErrMsg
+		log.NewInfo(req.OperationID, utils.GetSelfFuncName(), resp)
+		c.JSON(http.StatusOK, resp)
 	}
-	log.Info(req.OperationID, "", "api DelSuperGroupMsg call end..., [data: %s] [reply: %s]", pbData.String(), RpcResp.String())
-	resp.ErrCode = RpcResp.ErrCode
-	resp.ErrMsg = RpcResp.ErrMsg
-	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), resp)
-	c.JSON(http.StatusOK, resp)
+
 }
 
 // @Summary 清空用户消息
@@ -186,14 +203,14 @@ func ClearMsg(c *gin.Context) {
 
 	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), " api args ", req.String())
 
-	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImOfflineMessageName, req.OperationID)
+	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImMsgName, req.OperationID)
 	if etcdConn == nil {
 		errMsg := req.OperationID + " getcdv3.GetConn == nil"
 		log.NewError(req.OperationID, errMsg)
 		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
 		return
 	}
-	client := rpc.NewChatClient(etcdConn)
+	client := rpc.NewMsgClient(etcdConn)
 	RpcResp, err := client.ClearMsg(context.Background(), req)
 	if err != nil {
 		log.NewError(req.OperationID, " CleanUpMsg failed ", err.Error(), req.String(), RpcResp.ErrMsg)
@@ -202,6 +219,54 @@ func ClearMsg(c *gin.Context) {
 	}
 
 	resp := api.CleanUpMsgResp{CommResp: api.CommResp{ErrCode: RpcResp.ErrCode, ErrMsg: RpcResp.ErrMsg}}
+
+	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), " api return ", resp)
+	c.JSON(http.StatusOK, resp)
+}
+
+// @Summary 设置用户最小seq
+// @Description 设置用户最小seq，以及用户相关读扩散群组最小seq
+// @Tags 消息相关
+// @ID SetMsgMinSeq
+// @Accept json
+// @Param token header string true "im token"
+func SetMsgMinSeq(c *gin.Context) {
+	params := api.SetMsgMinSeqReq{}
+	if err := c.BindJSON(&params); err != nil {
+		log.NewError("0", "BindJSON failed ", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"errCode": 400, "errMsg": err.Error()})
+		return
+	}
+	//
+	req := &rpc.SetMsgMinSeqReq{}
+	utils.CopyStructFields(req, &params)
+
+	var ok bool
+	var errInfo string
+	ok, req.OpUserID, errInfo = token_verify.GetUserIDFromToken(c.Request.Header.Get("token"), req.OperationID)
+	if !ok {
+		errMsg := req.OperationID + " " + "GetUserIDFromToken failed " + errInfo + " token:" + c.Request.Header.Get("token")
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), " api args ", req.String())
+	etcdConn := getcdv3.GetConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImMsgName, req.OperationID)
+	if etcdConn == nil {
+		errMsg := req.OperationID + " getcdv3.GetConn == nil"
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	client := rpc.NewMsgClient(etcdConn)
+	RpcResp, err := client.SetMsgMinSeq(context.Background(), req)
+	if err != nil {
+		log.NewError(req.OperationID, " SetMsgMinSeq failed ", err.Error(), req.String(), RpcResp.ErrMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": RpcResp.ErrMsg})
+		return
+	}
+
+	resp := api.SetMsgMinSeqResp{CommResp: api.CommResp{ErrCode: RpcResp.ErrCode, ErrMsg: RpcResp.ErrMsg}}
 
 	log.NewInfo(req.OperationID, utils.GetSelfFuncName(), " api return ", resp)
 	c.JSON(http.StatusOK, resp)
